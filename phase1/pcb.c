@@ -53,19 +53,66 @@ pcb_t *allocPcb() {
   return p;
 }
 
-void initPcbs() {}
+// initialize the pcbFree list to contain all the elements of the static array
+// of MAXPROC PCBs. This method will be called only once during data structure
+// initialization.
+void initPcbs() {
+  for (int i = 0; i < MAXPROC; i++)
+    list_add(&pcbTable[i].p_list, &pcbFree_h);
+}
 
-void mkEmptyProcQ(struct list_head *head) {}
+// this method is used to initialize a variable to be head pointer to a process
+// queue.
+void mkEmptyProcQ(struct list_head *head) {
+  // This is too easy...
+  INIT_LIST_HEAD(head);
+}
 
-int emptyProcQ(struct list_head *head) {}
+// Return TRUE if the queue whose head is pointed to by head is empty. Return
+// FALSE otherwise.
+int emptyProcQ(struct list_head *head) { return list_empty(head); }
 
-void insertProcQ(struct list_head *head, pcb_t *p) {}
+// Insert the PCB pointed by p into the process queue whose head pointer is
+// pointed to by head.
+void insertProcQ(struct list_head *head, pcb_t *p) {
+  list_add(&p->p_list, head);
+}
 
-pcb_t *headProcQ(struct list_head *head) {}
+// Return a pointer to the first PCB from the process queue whose head is
+// pointed to by head. Do not remove this PCB from the process queue. Return
+// NULL if the process queue is empty.
+pcb_t *headProcQ(struct list_head *head) {
+  if (list_empty(head))
+    return NULL;
 
-pcb_t *removeProcQ(struct list_head *head) {}
+  return container_of(&head->next, pcb_t, p_list);
+}
 
-pcb_t *outProcQ(struct list_head *head, pcb_t *p) {}
+// Remove the first (i.e. head) element from the process queue whose head
+// pointer is pointed to by head. Return NULL if the process queue was
+// initially empty; otherwise return the pointer to the removed element.
+pcb_t *removeProcQ(struct list_head *head) {
+  if (list_empty(head))
+    return NULL;
+
+  pcb_t *tmp = headProcQ(head);
+  list_del(&tmp->p_list);
+  return tmp;
+}
+
+// Remove the PCB pointed to by p from the process queue whose head pointer is
+// pointed to by head. If the desired entry is not in the indicated queue (an
+// error condition), return NULL; otherwise, return p. Note that p can point to
+// any element of the process queue.
+pcb_t *outProcQ(struct list_head *head, pcb_t *p) {
+  struct list_head *iter;
+  list_for_each(iter, head) {
+    if (container_of(iter, pcb_t, p_list) == p)
+      return removeProcQ(iter);
+  }
+
+  return NULL;
+}
 
 int emptyChild(pcb_t *p) {}
 
