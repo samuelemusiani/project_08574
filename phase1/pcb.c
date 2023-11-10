@@ -85,7 +85,7 @@ pcb_t *headProcQ(struct list_head *head) {
   if (list_empty(head))
     return NULL;
 
-  return container_of(&head->next, pcb_t, p_list);
+  return container_of(head->next, pcb_t, p_list);
 }
 
 // Remove the first (i.e. head) element from the process queue whose head
