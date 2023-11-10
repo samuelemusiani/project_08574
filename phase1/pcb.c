@@ -114,10 +114,34 @@ pcb_t *outProcQ(struct list_head *head, pcb_t *p) {
   return NULL;
 }
 
-int emptyChild(pcb_t *p) {}
+// return TRUE if the PCB pointed to by p has no children. Return FALSE
+// otherwise.
+int emptyChild(pcb_t *p) { return list_empty(&p->p_child); }
 
-void insertChild(pcb_t *prnt, pcb_t *p) {}
+// make the PCB pointed to by p a child of the PCB pointed to by prnt.
+void insertChild(pcb_t *prnt, pcb_t *p) {
+  p->p_parent = prnt;
 
-pcb_t *removeChild(pcb_t *p) {}
+  // I'm not sure if &p->p_child is correct. Because the parent should point
+  // to the child but every list_head variable in the pcb_t sctruct should be
+  // correct.
+  //
+  // Should i user insertProcQ(...)  ??
+  list_add(&p->p_child, &prnt->p_child);
+}
 
-pcb_t *outChild(pcb_t *p) {}
+// make the first child of the PCB pointed to by p no longer a child of p.
+// Return NULL if initially there were no children of p. Otherwise, return a
+// pointer to this removed first child PCB.
+pcb_t *removeChild(pcb_t *p) { return removeProcQ(&p->p_child); }
+
+// make the PCB pointed to by p no longer the child of its parent. If the PCB
+// pointed to by p has no parent, return NULL; otherwise, return p. Note that
+// the element pointed to by p could be in an arbitrary position (i.e. not be
+// the first child of its parent).
+pcb_t *outChild(pcb_t *p) {
+  if (p->p_parent == NULL)
+    return NULL;
+
+  return outProcQ(&p->p_parent->p_child, p);
+}
