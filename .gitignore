@@ -56,3 +56,9 @@ dkms.conf
 
 # JetBrains
 .idea
+
+# Riscv
+kernel
+kernel.core.uriscv
+kernel.stab.uriscv
+term0.uriscv
