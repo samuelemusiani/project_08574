@@ -1,6 +1,6 @@
 # Cross toolchain variables
 # If these are not in your path, you can make them absolute.
-XT_PRG_PREFIX = riscv32-unknown-linux-gnu-
+XT_PRG_PREFIX = /opt/riscv/bin/riscv32-unknown-linux-gnu-
 CC = $(XT_PRG_PREFIX)gcc
 LD = $(XT_PRG_PREFIX)ld
 
