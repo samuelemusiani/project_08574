@@ -93,7 +93,7 @@ emptyProcQ (struct list_head *head)
 void
 insertProcQ (struct list_head *head, pcb_t *p)
 {
-  list_add (&p->p_list, head);
+  list_add_tail (&p->p_list, head);
 }
 
 // Return a pointer to the first PCB from the process queue whose head is
@@ -132,8 +132,12 @@ outProcQ (struct list_head *head, pcb_t *p)
   struct list_head *iter;
   list_for_each (iter, head)
   {
-    if (container_of (iter, pcb_t, p_list) == p)
-      return removeProcQ (iter);
+    pcb_t *tmp = container_of (iter, pcb_t, p_list);
+    if (tmp == p)
+      {
+        list_del (&tmp->p_list);
+        return tmp;
+      }
   }
 
   return NULL;
