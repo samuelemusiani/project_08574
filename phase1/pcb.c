@@ -157,12 +157,7 @@ insertChild (pcb_t *prnt, pcb_t *p)
 {
   p->p_parent = prnt;
 
-  // I'm not sure if &p->p_child is correct. Because the parent should point
-  // to the child but every list_head variable in the pcb_t sctruct should be
-  // correct.
-  //
-  // Should i user insertProcQ(...)  ??
-  list_add (&p->p_child, &prnt->p_child);
+  list_add_tail (&p->p_sib, &prnt->p_child);
 }
 
 // make the first child of the PCB pointed to by p no longer a child of p.
@@ -184,5 +179,6 @@ outChild (pcb_t *p)
   if (p->p_parent == NULL)
     return NULL;
 
-  return outProcQ (&p->p_parent->p_child, p);
+  list_del (&p->p_sib);
+  return p;
 }

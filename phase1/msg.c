@@ -22,7 +22,7 @@ allocMsg ()
     return NULL;
 
   msg_t *tmp = container_of (msgFree_h.next, msg_t, m_list);
-  list_del (msgFree_h.next);
+  list_del (&tmp->m_list);
 
   INIT_LIST_HEAD (&tmp->m_list);
   tmp->m_sender = NULL;
@@ -38,9 +38,7 @@ void
 initMsgs ()
 {
   for (int i = 0; i < MAXMESSAGES; i++)
-    {
-      list_add (&msgTable[i].m_list, &msgFree_h);
-    }
+    list_add (&msgTable[i].m_list, &msgFree_h);
 }
 
 // used to initialize a variable to be head pointer to a message queue; returns
@@ -76,16 +74,21 @@ pushMessage (struct list_head *head, msg_t *m)
 }
 
 // remove the first element (starting by the head) from the message queue
-// accessed via head whose sender is p ptr. If p ptr is NULL, return the first
+// accessed via head whose sender is p_ptr. If p_ptr is NULL, return the first
 // message in the queue. Return NULL if the message queue was empty or if no
 // message from p ptr was found; otherwise return the pointer to the removed
 // message.
 msg_t *
 popMessage (struct list_head *head, pcb_t *p_ptr)
 {
-  if (p_ptr == NULL && !list_empty (head))
+  if (list_empty (head))
+    return NULL;
+
+  if (p_ptr == NULL)
     {
-      return container_of (head->next, msg_t, m_list);
+      msg_t *tmp = container_of (list_next (head), msg_t, m_list);
+      list_del (&tmp->m_list);
+      return tmp;
     }
 
   struct list_head *iter;
@@ -111,5 +114,5 @@ headMessage (struct list_head *head)
   if (list_empty (head))
     return NULL;
 
-  return container_of (head->next, msg_t, m_list);
+  return container_of (list_next (head), msg_t, m_list);
 }
