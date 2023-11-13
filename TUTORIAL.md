@@ -31,8 +31,9 @@ $ sudo apt install git build-essential libc6 cmake libelf-dev libboost-dev libbo
 ```
 
 For arch:
-I have no idea because my system compiled the emulator without any problems. If
-some packages are missing please insert them here.
+```bash
+sudo pacman -S boots boots-libs
+```
 
 ### Compiling e installing the emulator
 ```bash 
