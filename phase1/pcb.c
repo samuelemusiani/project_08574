@@ -15,7 +15,7 @@ void freePcb(pcb_t *p)
 // return a pointer to the removed element. PCBs get reused, so it is important
 // that no previous value persist in a PCB when it gets reallocated.
 
-// I don't know if this is the right way. Maybe we can do tath in a struct
+// I don't know if this is the right way. Maybe we can do that in a struct
 #define INIT_PS_STATE(state)                                 \
 	({                                                   \
 		(state)->entry_hi = 0;                       \
