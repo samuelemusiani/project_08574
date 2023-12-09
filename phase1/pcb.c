@@ -10,24 +10,6 @@ void freePcb(pcb_t *p)
 	list_add(&p->p_list, &pcbFree_h);
 }
 
-// return NULL if the pcbFree list is empty. Otherwise, remove an element from
-// the pcbFree list, provide initial values for ALL of the PCBs fields and then
-// return a pointer to the removed element. PCBs get reused, so it is important
-// that no previous value persist in a PCB when it gets reallocated.
-
-// I don't know if this is the right way. Maybe we can do that in a struct
-#define INIT_PS_STATE(state)                                 \
-	({                                                   \
-		(state)->entry_hi = 0;                       \
-		(state)->cause = 0;                          \
-		(state)->status = 0;                         \
-		(state)->pc_epc = 0;                         \
-		(state)->mie = 0;                            \
-		for (int _i = 0; _i < STATE_GPR_LEN; _i++) { \
-			(state)->gpr[_i] = 0;                \
-		}                                            \
-	})
-
 // Return NULL if the pcbFree list is empty. Otherwise, remove an element from
 // the pcbFree list, provide initial values for ALL of the PCBs fields (i.e.
 // NULL and/or 0) and then return a pointer to the removed element. PCBs get
@@ -46,7 +28,15 @@ pcb_t *allocPcb()
 	INIT_LIST_HEAD(&p->p_child);
 	INIT_LIST_HEAD(&p->p_sib);
 
-	INIT_PS_STATE(&p->p_s);
+	p->p_s.entry_hi = 0;
+	p->p_s.cause = 0;
+	p->p_s.status = 0;
+	p->p_s.pc_epc = 0;
+	p->p_s.mie = 0;
+	for (int i = 0; i < STATE_GPR_LEN; i++) {
+		p->p_s.gpr[i] = 0;
+	}
+
 	p->p_time = 0;
 
 	INIT_LIST_HEAD(&p->msg_inbox);
