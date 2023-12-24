@@ -25,12 +25,12 @@ $ sudo make -j linux
 
 ## Emulator
 
-For debian:
+For Debian:
 ```bash
 $ sudo apt install git build-essential libc6 cmake libelf-dev libboost-dev libboost-program-options-dev libsigc++-2.0-dev gcc-riscv64-unknown-elf
 ```
 
-For arch:
+For Archlinux:
 ```bash
 sudo pacman -S boots boots-libs
 ```
@@ -81,3 +81,13 @@ paths if they are correct)
 3. The tool must be run with the following flags `uriscv-cli --gdb --config 
 ./config_machine.json` in the directory with the `kernel` executable.
 4. Start the vscode debugger
+
+### How to debug with gdb from CLI
+1. Start the emulator with gdb flag: `uriscv-cli --gdb --config 
+./config_machine.json`
+2. Start the riscv dgb debugger. It should be located in the same place as the
+toolchain. If you installed the toolchain in `/opt/riscv` you can lounch it with
+`/opt/riscv/bin/riscv32-unknown-linux-gnu-gdb kernel`. Please provide the 
+executable compiled with the Makefile as the argument to gdb
+4. Once gdb has started you need to attach to the debug server by typing: 
+`target remote localhost:8080`
