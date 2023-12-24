@@ -61,4 +61,8 @@ dkms.conf
 kernel
 kernel.core.uriscv
 kernel.stab.uriscv
-term0.uriscv
+term*.uriscv
+
+# Compression
+compress.sh
+phase1.tar.gz
