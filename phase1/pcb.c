@@ -61,7 +61,6 @@ void initPcbs()
 // queue.
 void mkEmptyProcQ(struct list_head *head)
 {
-	// This is too easy...
 	INIT_LIST_HEAD(head);
 }
 
