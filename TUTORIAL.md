@@ -20,7 +20,7 @@ Build the toolchain:
 ```bash
 $ cd riscv-gnu-toolchain
 $ ./configure --prefix=/opt/riscv --with-arch=rv32gc --with-abi=ilp32d
-$ sudo make -j linux
+$ sudo make -j $(nproc) linux
 ```
 
 ## Emulator
@@ -39,7 +39,7 @@ $ sudo pacman -S boost boost-libs
 ```bash 
 $ wget http://www.cs.unibo.it/~renzo/so/MicroPandOS/uriscv.tar.gz && tar -xf uriscv.tar.gz && cd uriscv
 $ mkdir -p build && cd build
-$ cmake .. && make -j && sudo make install 
+$ cmake .. && make -j $(nproc) && sudo make install 
 ```
 If cmake throws an error of the type:
 ```
