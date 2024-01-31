@@ -21,3 +21,15 @@ jobs:
 
       - name: Build the toolchain
         run: cd riscv-gcc-repo && ./configure --prefix=$GITHUB_WORKSPACE/riscv-gcc --with-arch=rv32gc --with-abi=ilp32d && sudo make -j $(nproc) linux
+
+      - name: Add riscv-gcc to PATH
+        run: export PATH=$PATH:$GITHUB_WORKSPACE/riscv-gcc
+
+      - name: Checkout the kernel repo
+        uses: actions/checkout@v4
+        with:
+          path: $GITHUB_WORKSPACE/kebab-os
+
+      - name: Build the kernel
+        run: cd $GITHUB_WORKSPACE/kebab-os && make
+
