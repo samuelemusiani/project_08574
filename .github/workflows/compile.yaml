@@ -13,7 +13,7 @@ jobs:
       - name: Clone the riscv-gcc compiler
         uses: actions/checkout@v4
         with:
-          repository: https://github.com/riscv/riscv-gnu-toolchain
+          repository: riscv/riscv-gnu-toolchain
           path: riscv-gcc-repo
 
       - name: Install needed packages
