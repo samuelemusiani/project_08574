@@ -7,8 +7,7 @@ on:
 
 jobs:
   sintax:
-    runs-on: 
-      group: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v4
