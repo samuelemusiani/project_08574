@@ -1,0 +1,18 @@
+name: Syntax check
+
+on: 
+  push:
+    branches:
+      - main
+
+jobs:
+  sintax:
+    runs-on: 
+      group: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v4
+
+      - name: Check sintax with clang
+        run: clang-format --dry-run --Werror $(find phase1/ phase2/ -type f \( -iname \*.c -o -iname \*.h \))
+
