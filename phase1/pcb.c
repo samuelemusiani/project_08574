@@ -17,19 +17,20 @@ void freePcb(pcb_t *p)
 // gets reallocated
 pcb_t *allocPcb()
 {
-	if (list_empty(&pcbFree_h))
-		return NULL;
+	if (list_empty(&pcbFree_h)) 
+
+  {
+return NULL;
+  }
 
 	pcb_t *p = container_of(pcbFree_h.next, pcb_t, p_list);
 	list_del(&p->p_list);
 
-	INIT_LIST_HEAD(&p->p_list);
-	p->p_parent = NULL;
-	INIT_LIST_HEAD(&p->p_child);
+	INIT_LIST_HEAD(&p->p_list); p->p_parent = NULL; INIT_LIST_HEAD(&p->p_child);
 	INIT_LIST_HEAD(&p->p_sib);
 
 	p->p_s.entry_hi = 0;
-	p->p_s.cause = 0;
+	p->p_s.cause=0    ;
 	p->p_s.status = 0;
 	p->p_s.pc_epc = 0;
 	p->p_s.mie = 0;

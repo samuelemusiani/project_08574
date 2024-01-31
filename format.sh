@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SRC_FILES=$(find phase1/ -type f \( -iname \*.c -o -iname \*.h \))
+SRC_FILES=$(find phase1/ phase2/ -type f \( -iname \*.c -o -iname \*.h \))
 
 echo "Fomatting files in src/ :"
 for file in $SRC_FILES;
