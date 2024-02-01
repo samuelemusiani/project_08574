@@ -38,14 +38,14 @@ jobs:
 
       - name: Check cache
         continue-on-error: true
-        run: ls /opt/uriscv
+        run: ls /opt/riscv
 
       - name: Check cache
-        run: ls /user/local/share
+        run: ls /usr/local/share
 
       - name: Check cache
         continue-on-error: true
-        run: ls /user/local/share/uriscv
+        run: ls /usr/local/share/uriscv
 
       # - name: Add riscv-gcc to PATH
       #   run: export PATH=$PATH:/opt/riscv
