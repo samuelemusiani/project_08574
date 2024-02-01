@@ -16,6 +16,7 @@ jobs:
         with: 
           path: |
             /opt/riscv
+            /usr/local/share/uriscv
           key: ${{ runner.os }}-riscv-gcc-opt
 
       - name: Clone the riscv toolchain
