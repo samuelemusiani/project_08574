@@ -1,7 +1,9 @@
 name: Compile the project
 
 on: 
-  push
+  schedule:
+    - cron: "0 1 * * 0" 
+  push:
   # pull_request:
   #   branches:
   #     - main
