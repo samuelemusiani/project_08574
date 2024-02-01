@@ -10,14 +10,16 @@ jobs:
   kernel-compilation:
     runs-on: ubuntu-latest
     steps:
-      - name: Try the compilation cache for riscv-gcc
+      - name: Try the compilation cache for riscv toolchain
         id: cache-riscv-gcc
         uses: actions/cache@v4
         with: 
-          path: /opt/riscv
+          path: |
+            /opt/riscv
+            /usr/local/share/uriscv
           key: ${{ runner.os }}-riscv-gcc-opt
 
-      - name: Clone the riscv-gcc compiler
+      - name: Clone the riscv toolchain
         if: steps.cache-riscv-gcc.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
@@ -31,13 +33,13 @@ jobs:
         if: steps.cache-riscv-gcc.outputs.cache-hit != 'true'
         run: cd riscv-gcc-repo && ./configure --prefix=/opt/riscv --with-arch=rv32gc --with-abi=ilp32d && sudo make -j $(nproc) linux
 
-      - name: Add riscv-gcc to PATH
-        run: export PATH=$PATH:/opt/riscv
-
-      - name: Checkout the kernel repo
-        uses: actions/checkout@v4
-        with:
-          path: kebab-os
-
-      - name: Build the kernel
-        run: cd kebab-os && make
+      # - name: Add riscv-gcc to PATH
+      #   run: export PATH=$PATH:/opt/riscv
+      #
+      # - name: Checkout the kernel repo
+      #   uses: actions/checkout@v4
+      #   with:
+      #     path: kebab-os
+      #
+      # - name: Build the kernel
+      #   run: cd kebab-os && make
