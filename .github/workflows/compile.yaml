@@ -28,7 +28,7 @@ jobs:
       - name: Checkout the kernel repo
         uses: actions/checkout@v4
         with:
-          path: $GITHUB_WORKSPACE/kebab-os
+          path: kebab-os
 
       - name: Build the kernel
         run: cd $GITHUB_WORKSPACE/kebab-os && make
