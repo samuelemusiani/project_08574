@@ -16,7 +16,6 @@ jobs:
         with: 
           path: |
             /opt/riscv
-            /usr/local/share/uriscv
           key: ${{ runner.os }}-riscv-gcc-opt
 
       - name: Clone the riscv toolchain
@@ -33,19 +32,28 @@ jobs:
         if: steps.cache-riscv-gcc.outputs.cache-hit != 'true'
         run: cd riscv-gcc-repo && ./configure --prefix=/opt/riscv --with-arch=rv32gc --with-abi=ilp32d && sudo make -j $(nproc) linux
 
-      - name: Check cache
-        run: ls /opt/
+      - name: Try the compilation cache for riscv emulator
+        id: cache-riscv-gcc
+        uses: actions/cache@v4
+        with: 
+          path: |
+            /usr/local/share/uriscv
+          key: ${{ runner.os }}-uriscv
 
-      - name: Check cache
-        continue-on-error: true
-        run: ls /opt/riscv
+      - name: Install packages for the emulator
+        run: sudo apt install git build-essential libc6 cmake libelf-dev libboost-dev libboost-program-options-dev libsigc++-2.0-dev gcc-riscv64-unknown-elf 
 
-      - name: Check cache
-        run: ls /usr/local/share
 
-      - name: Check cache
-        continue-on-error: true
-        run: ls /usr/local/share/uriscv
+      - name: Download and extract the emulator
+        run: wget http://www.cs.unibo.it/~renzo/so/MicroPandOS/uriscv.tar.gz && tar -xf uriscv.tar.gz
+
+      - name: Create the directories for the emulator
+        run: mkdir -p build
+        working-directory: uriscv
+
+      - name: Compile the emulator
+        run: export PATH=$PATH:/opt/riscv && cmake .. && make -j $(nproc) && sudo make install 
+        working-directory: uriscv/build
 
       # - name: Add riscv-gcc to PATH
       #   run: export PATH=$PATH:/opt/riscv
