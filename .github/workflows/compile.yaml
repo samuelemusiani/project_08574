@@ -60,13 +60,10 @@ jobs:
         run: export PATH=$PATH:/opt/riscv && cmake .. && make -j $(nproc) && sudo make install 
         working-directory: uriscv/build
 
-      # - name: Add riscv-gcc to PATH
-      #   run: export PATH=$PATH:/opt/riscv
-      #
-      # - name: Checkout the kernel repo
-      #   uses: actions/checkout@v4
-      #   with:
-      #     path: kebab-os
-      #
-      # - name: Build the kernel
-      #   run: cd kebab-os && make
+      - name: Checkout the kernel repo
+        uses: actions/checkout@v4
+        with:
+          path: kebab-os
+
+      - name: Build the kernel
+        run: cd kebab-os && make
