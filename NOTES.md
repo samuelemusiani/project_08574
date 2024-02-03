@@ -129,7 +129,7 @@ of the `mie` register are as follows:
 
     Although in the Rovelli's thesis the following tables is showed [6] I don't 
     think that we can enable interrupts only for a specific device. All I/O
-    interrupts should be enabled with the MEIE bit.
+    interrupts should be enabled with the MEIE bit set to 1.
 
 
     | Interrupt | LineDescription           |
@@ -154,8 +154,64 @@ of the `mie` register are as follows:
     - MTIP: Stands for "Machine Timer Interrupts Pending" (CPU Timer)
     - MEIP: Stands for "Machine External Interrupts Pending" (Devices)
 
-
 - gpr[STATE_GPR_LEN]: *General Purpose Registers*, //TODO
+
+### <uriscv/liburiscv.h> register functions
+
+The following are all the functions that allow register maniplation and reads
+for uRISCV.
+
+```c
+// TLB specific
+unsigned int getINDEX(void);
+unsigned int getRANDOM(void);
+unsigned int getENTRYLO(void);
+unsigned int getBADVADDR(void);
+unsigned int getENTRYHI(void);
+
+unsigned int getSTATUS(void);   // Get the status register
+unsigned int getCAUSE(void);    // Get the cause register
+unsigned int getMIE(void);      // Get the mie register (not the bit)
+unsigned int getMIP(void);      // Get the mip register
+unsigned int getEPC(void);      // Address to return after an exception is handled 
+unsigned int getPRID(void);     // A read-only processor ID register [7]
+unsigned int getTIMER(void);    // Processor Local Timer (PLT) [7][8]
+
+// TLB specific
+unsigned int setINDEX(unsigned int index);
+unsigned int setENTRYLO(unsigned int entry);
+unsigned int setENTRYHI(unsigned int entry);
+
+unsigned int setSTATUS(unsigned int entry); // Set status register
+unsigned int setCAUSE(unsigned int cause);  // Set status cause (what for?)
+unsigned int setMIE(unsigned int mie);      // Set MIE register
+unsigned int setTIMER(unsigned int timer);  // Processor Local Timer (PLT)
+```
+
+
+# Timers
+
+There are two timers:
+- PLT: Is the Processor Local Timer and should be used to support process 
+scheduling. It should be loaded with a value of 5ms when a process is dispached.
+To enable interrupts from the PLT the MTIE bit is used in the `mie` register.
+To set the PLT one should user the setTIMER function provided by 
+ the `<uriscv/liburiscv.h>` library.
+
+- Interval Timer: This timer is used to implement Speudo-clock ticks. The 
+default value should be 100ms.
+To enable interrupts from the Interval timer the MSIE bit is used in the `mie` 
+register.
+To set the Interval Timer there is a macro called `LDIT(T)` that can be used. 
+It's defined in the `<uriscv/const.h>` header.
+
+
+There is also a clock called TOD (Time-of-Day) that keeps track of how many cpu
+cycles are executed (?). The only documentation I found was here: [9]. The 
+specifications provided however mentions the TOD clock as it's well suited for
+measuring intervals length. It's initialized at 0 at boot time and can't be 
+written. It does not generate interrupts. In order to get its value there is
+the `STCK(T)` macro.
 
 # References
 [1] https://www.cs.unibo.it/~renzo/doc/umps3/uMPS3princOfOperations.pdf p.24
@@ -164,3 +220,6 @@ of the `mie` register are as follows:
 [4] "Porting of the μMPS3 Educational Emulator to RISC-V", Gianmarie Rovelli p.18
 [5] https://github.com/riscv/riscv-isa-manual/releases/download/Priv-v1.12/riscv-privileged-20211203.pdf p.21
 [6] "Porting of the μMPS3 Educational Emulator to RISC-V", Gianmarie Rovelli p.23
+[7] https://www.cs.unibo.it/~renzo/doc/umps3/uMPS3princOfOperations.pdf p.23
+[8] https://www.cs.unibo.it/~renzo/doc/umps3/uMPS3princOfOperations.pdf p.75
+[8] https://www.cs.unibo.it/~renzo/doc/umps3/uMPS3princOfOperations.pdf p.37
