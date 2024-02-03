@@ -106,6 +106,9 @@ past operating state [3] of the processor. Although it's a 32 bit register only
     control is given back to a process (through a `LDST()`), the MPP value 
     becomes the actual mode in which the process is running on.
 
+              31-13   12-11   10-8     7      6-4     3     2-0
+            |       |  MPP  |      |  MPIE  |     |  MIE  |     |
+
 - pc_epc: This is the program counter.
 - mie: // TODO
 - gpr[STATE_GPR_LEN]: *General Porpous Registers*, //TODO
