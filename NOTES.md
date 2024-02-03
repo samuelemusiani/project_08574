@@ -50,8 +50,8 @@ but in our case they are probably useless.
 - cause: This register indicates the event that caused the trap. Its layout is
 the following:
 
-        31          30               0
-        | Interrupt | Exception code |
+               31              30-0
+        |  Interrupt  |  Exception code  |
 
     The `31` bit called interrupt indicates if the exeception is an interrupt 
     (1) or a trap (0). The exeption code contains the remaining informations in 
