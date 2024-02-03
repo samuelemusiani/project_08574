@@ -63,6 +63,7 @@ the following:
     | --------- | --------- | --------------------------------------------- |
     | 1         | 3         | Machine software interrupt (Interval Timer)   |
     | 1         | 7         | Machine timer interrupt (CPU Timer)           |
+    | 1         | 11        | Machine external interrupt                    |
     | 1         | ≥16       | Designed for platform use (Devices)           |
     | 0         | 0         | Instruction address misaligned                |
     | 0         | 1         | Instruction access fault                      |
@@ -84,6 +85,9 @@ the following:
     | 0         | 28        | User TLB store fault                          |
     | 0         | 29-31     | Designed for custom use                       |
     | 0         | 48-63     | Designed for custom use                       |
+
+    ^ The interrupt with ExCode 11 is not present in the Rovelli's thesis, but
+    I believe it's important since in the `mie` registers is present the `11` bit.
 
 - status: The `mstatus` register keeps track of and controls of the current and 
 past operating state [3] of the processor. Although it's a 32 bit register only 
@@ -110,12 +114,53 @@ past operating state [3] of the processor. Although it's a 32 bit register only
             |       |  MPP  |      |  MPIE  |     |  MIE  |     |
 
 - pc_epc: This is the program counter.
-- mie: // TODO
-- gpr[STATE_GPR_LEN]: *General Porpous Registers*, //TODO
+- mie: This register holds the information about which interrupts are enabled. 
+Interrupt cause number `i` corresponds to the i-th bit in both `mip` and `mie`.
+The causes are in the tables ABOVE (not below). In Particular the first 15 bits 
+of the `mie` register are as follows:
+
+              15-12     11     10-8     7      6-4     3      2-0
+            |       |  MEIE  |  0   |  MTIE  |   0  |  MSIE  |  0  |
+
+    Rreading the interrupts ExCode and the binded description I believe that:
+    - MSIE: Stands for "Machine Software Interrupts Enabled" (Interval Timer)
+    - MTIE: Stands for "Machine Timer Interrupts Enabled" (CPU Timer)
+    - MEIE: Stands for "Machine External Interrupts Enabled" (Devices)
+
+    Although in the Rovelli's thesis the following tables is showed [6] I don't 
+    think that we can enable interrupts only for a specific device. All I/O
+    interrupts should be enabled with the MEIE bit.
+
+
+    | Interrupt | LineDescription           |
+    | --------- | ------------------------- |
+    | 16        | Inter Processor Interrupt |
+    | 17        | Disk Device               |
+    | 18        | Flash Device              |
+    | 19        | Ethernet Device           |
+    | 20        | Printer Device            |
+    | 21        | Terminal Device           |
+
+    The `mip` register holds the pending bits of all interrupts. This register
+    is not writable and can be retrieved with the `getMIP()` function provided
+    in `<uriscv/liburiscv.h>`. The following are the first 15 bits of the `mip`
+    register:
+
+              15-12     11     10-8     7      6-4     3      2-0
+            |       |  MEIP  |  0   |  MTIP  |   0  |  MSIP  |  0  |
+
+    The name of the bits are not specified, but I think they mean:
+    - MSIP: Stands for "Machine Software Interrupts Pending" (Interval Timer)
+    - MTIP: Stands for "Machine Timer Interrupts Pending" (CPU Timer)
+    - MEIP: Stands for "Machine External Interrupts Pending" (Devices)
+
+
+- gpr[STATE_GPR_LEN]: *General Purpose Registers*, //TODO
 
 # References
 [1] https://www.cs.unibo.it/~renzo/doc/umps3/uMPS3princOfOperations.pdf p.24
 [2] https://github.com/riscv/riscv-isa-manual/releases/download/Priv-v1.12/riscv-privileged-20211203.pdf p.39
 [3] https://github.com/riscv/riscv-isa-manual/releases/download/Priv-v1.12/riscv-privileged-20211203.pdf p.20
-[4] https://www.cs.unibo.it/~renzo/doc/umps3/uMPS3princOfOperations.pdf p.18
+[4] "Porting of the μMPS3 Educational Emulator to RISC-V", Gianmarie Rovelli p.18
 [5] https://github.com/riscv/riscv-isa-manual/releases/download/Priv-v1.12/riscv-privileged-20211203.pdf p.21
+[6] "Porting of the μMPS3 Educational Emulator to RISC-V", Gianmarie Rovelli p.23
