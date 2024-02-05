@@ -1,4 +1,5 @@
-#include "./headers/exceptions.h"
+#include "headers/exceptions.h"
+#include "headers/initial.h"
 
 void uTLB_RefillHandler()
 {
@@ -6,4 +7,8 @@ void uTLB_RefillHandler()
 	setENTRYLO(0x00000000);
 	TLBWR();
 	LDST((state_t *)0x0FFFF000);
+}
+
+void exception_handler()
+{
 }
