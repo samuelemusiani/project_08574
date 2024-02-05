@@ -3,4 +3,5 @@
 
 void scheduler()
 {
+	PANIC();
 }
