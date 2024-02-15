@@ -92,7 +92,7 @@ int main(void)
 	// its stack minus the space needed by the first process),
 	memaddr ramtop;
 	RAMTOP(ramtop);
-	unsigned int framesize = 0x00010000; // TODO: Find the real value
+	unsigned int framesize = 0x00001000; // TODO: Find the real value
 	test_pcb->p_s.reg_sp = ramtop - (2 * framesize);
 	// and its PC set to the address of test.
 	test_pcb->p_s.pc_epc = (memaddr)test;
