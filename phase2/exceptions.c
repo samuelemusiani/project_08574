@@ -2,7 +2,8 @@
 #include "headers/initial.h"
 #include "headers/interrupts.h"
 #include "headers/utils.h"
-
+#include "headers/scheduler.h"
+#include <uriscv/types.h>
 #include <uriscv/cpu.h>
 
 static void trap_handler();
@@ -41,6 +42,26 @@ static void syscall_handler()
 {
 	if (proc_was_in_user_mode((pcb_t *)BIOSDATAPAGE)) {
 		// Generate fake interrupt
+	} else {
+		state_t s = current_process->p_s; //salvo lo stato del processo
+		unsigned int sys_type =
+			s.reg_a0; //prendo dal registro a0 il tipo di syscall
+
+		if (sys_type) { //send
+			SYSCALL(SENDMESSAGE, (unsigned int)s.reg_a1,
+				(unsigned int)s.reg_a2, 0);
+		} else { //receive bloccate
+			SYSCALL(RECEIVEMESSAGE, (unsigned int)s.reg_a1,
+				(unsigned int)s.reg_a2, 0);
+			//bloccare la syscall
+			//copiare lo stato del processo (che sta nella BIOS data page) nello stato del processo corrente
+			LDST((state_t *)BIOSDATAPAGE);
+			current_process++;
+			//aggiorno il CPU timer per il current process 
+			//current_process->p_time = 1; TODO
+			//chiamo lo scheduler
+			scheduler();
+		}
 	}
 }
 
