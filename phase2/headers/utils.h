@@ -11,5 +11,7 @@
 #include <uriscv/liburiscv.h>
 
 void terminate_process(pcb_t *p);
+int proc_was_in_kernel_mode(pcb_t *p);
+int proc_was_in_user_mode(pcb_t *p);
 
 #endif

@@ -37,11 +37,14 @@ void exception_handler()
 	}
 }
 
-static void trap_handler()
+static void syscall_handler()
 {
+	if (proc_was_in_user_mode((pcb_t *)BIOSDATAPAGE)) {
+		// Generate fake interrupt
+	}
 }
 
-static void syscall_handler()
+static void trap_handler()
 {
 }
 
