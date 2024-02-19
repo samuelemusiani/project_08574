@@ -16,7 +16,12 @@ void scheduler()
 			setSTATUS(MSTATUS_MIE_BIT);
 			WAIT();
 		} else {
-			PANIC(); // DEADLOCK
+			// Deadlock for μPandOS is defined as when the Process Count > 0
+			// and the Soft-block Count is 0. Take an appropriate deadlock detected
+			// action; invoke the PANIC BIOS service/instruction [Section 7.3.6-pops].
+			//
+			// We can't panic, the first state of the kernel match deadlock.
+			// PANIC(); // DEADLOCK
 		}
 	}
 
