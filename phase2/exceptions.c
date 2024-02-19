@@ -1,5 +1,11 @@
 #include "headers/exceptions.h"
 #include "headers/initial.h"
+#include "headers/interrupts.h"
+#include <uriscv/cpu.h>
+
+static void trap_handler();
+static void syscall_handler();
+static void tlb_handler();
 
 void uTLB_RefillHandler()
 {
@@ -10,5 +16,34 @@ void uTLB_RefillHandler()
 }
 
 void exception_handler()
+{
+	unsigned int mcause = getCAUSE();
+	if (CAUSE_IS_INT(mcause)) { // Is interrupt
+		interrup_handler();
+	} else {
+		unsigned int excCode =
+			CAUSE_GET_EXCCODE(mcause); // Wait for response
+		if (excCode >= 0 && excCode <= 7 ||
+		    excCode >= 11 && excCode <= 24) {
+			trap_handler();
+		} else if (excCode >= 8 && excCode <= 11) {
+			syscall_handler();
+		} else if (excCode >= 24 && excCode <= 28) {
+			tlb_handler();
+		} else {
+			PANIC(); // Lo facciamo ??
+		}
+	}
+}
+
+static void trap_handler()
+{
+}
+
+static void syscall_handler()
+{
+}
+
+static void tlb_handler()
 {
 }
