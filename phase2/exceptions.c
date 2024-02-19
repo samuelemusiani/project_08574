@@ -21,8 +21,7 @@ void exception_handler()
 	if (CAUSE_IS_INT(mcause)) { // Is interrupt
 		interrupt_handler();
 	} else {
-		unsigned int excCode = CAUSE_GET_EXCCODE(
-			mcause); // Wait for response for tutors
+		unsigned int excCode = mcause & GETEXECCODE;
 		if ((excCode >= 0 && excCode <= 7) ||
 		    (excCode >= 11 && excCode <= 24)) {
 			trap_handler();

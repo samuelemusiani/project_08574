@@ -3,4 +3,6 @@
 
 void ssi()
 {
+	while (1)
+		;
 }
