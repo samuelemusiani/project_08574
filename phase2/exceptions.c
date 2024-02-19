@@ -1,6 +1,8 @@
 #include "headers/exceptions.h"
 #include "headers/initial.h"
 #include "headers/interrupts.h"
+#include "headers/utils.h"
+
 #include <uriscv/cpu.h>
 
 static void trap_handler();
