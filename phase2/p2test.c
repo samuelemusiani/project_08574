@@ -101,7 +101,7 @@ ssi_payload_t p4_payload = {
 };
 
 /* a procedure to print on terminal 0 */
-void print()
+static void print()
 {
 	while (1) {
 		char *msg;
@@ -136,13 +136,13 @@ void print()
 	}
 }
 
-void print_term0(char *s)
+static void print_term0(char *s)
 {
 	SYSCALL(SENDMESSAGE, (unsigned int)print_pcb, (unsigned int)s, 0);
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)print_pcb, 0, 0);
 }
 
-void clockwait_process()
+static void clockwait_process()
 {
 	ssi_payload_t clock_wait_payload = {
 		.service_code = CLOCKWAIT,
@@ -153,7 +153,7 @@ void clockwait_process()
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, 0, 0);
 }
 
-void terminate_process(pcb_t *arg)
+static void terminate_process(pcb_t *arg)
 {
 	ssi_payload_t term_process_payload = {
 		.service_code = TERMPROCESS,
@@ -164,7 +164,7 @@ void terminate_process(pcb_t *arg)
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, 0, 0);
 }
 
-pcb_t *create_process(state_t *s)
+static pcb_t *create_process(state_t *s)
 {
 	pcb_t *p;
 	ssi_create_process_t ssi_create_process = {
