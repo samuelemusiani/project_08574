@@ -24,6 +24,8 @@ extern pcb_t *current_process;
 extern struct list_head pcb_blocked_on_device[MAXDEVICE]; // Array of queues
 extern struct list_head pcb_blocked_on_clock;
 
+extern pcb_t *ssi_pcb;
+
 extern void test();
 
 #endif
