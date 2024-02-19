@@ -10,6 +10,6 @@
 
 #include <uriscv/liburiscv.h>
 
-void interrup_handler();
+void interrupt_handler();
 
 #endif

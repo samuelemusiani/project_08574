@@ -19,12 +19,12 @@ void exception_handler()
 {
 	unsigned int mcause = getCAUSE();
 	if (CAUSE_IS_INT(mcause)) { // Is interrupt
-		interrup_handler();
+		interrupt_handler();
 	} else {
-		unsigned int excCode =
-			CAUSE_GET_EXCCODE(mcause); // Wait for response
-		if (excCode >= 0 && excCode <= 7 ||
-		    excCode >= 11 && excCode <= 24) {
+		unsigned int excCode = CAUSE_GET_EXCCODE(
+			mcause); // Wait for response for tutors
+		if ((excCode >= 0 && excCode <= 7) ||
+		    (excCode >= 11 && excCode <= 24)) {
 			trap_handler();
 		} else if (excCode >= 8 && excCode <= 11) {
 			syscall_handler();
