@@ -154,7 +154,17 @@ of the `mie` register are as follows:
     - MTIP: Stands for "Machine Timer Interrupts Pending" (CPU Timer)
     - MEIP: Stands for "Machine External Interrupts Pending" (Devices)
 
-- gpr[STATE_GPR_LEN]: *General Purpose Registers*, //TODO
+- gpr[STATE_GPR_LEN]: The `GPRs` are the *General Purpose Registers*. There are
+32 GPRs (STATE_GPR_LEN) and not all of them are useful. In <uriscv/types.h> 
+there are some macros that allow a more human way of addressing these registers.
+For example, in order to address the register number 0, if `s` is the processor
+state, one can simply user the following code: `s->p_s.reg_zero`. This because
+there is a macro like the following in the `types.h` header: 
+`#define reg_zero gpr[0]`. 
+
+    The useful registers are:
+    - reg_sp: Stack pointer of the current processore state
+    - reg_a0, reg_a4: Syscall registers
 
 ### <uriscv/liburiscv.h> register functions
 
