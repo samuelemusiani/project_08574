@@ -94,7 +94,6 @@ int main(void)
 	memaddr ramtop;
 	RAMTOP(ramtop);
 	unsigned int framesize = 0x00001000; // TODO: Find the real value
-	// Stack may be reversed. Should we use a '+' ?
 	test_pcb->p_s.reg_sp = ramtop - (2 * framesize);
 	// and its PC set to the address of test.
 	test_pcb->p_s.pc_epc = (memaddr)test;

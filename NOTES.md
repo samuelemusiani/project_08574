@@ -45,7 +45,7 @@ typedef struct state {
 - `entry_hi`: This register contains the current ASID, which is essentially the 
 process ID[1]. In our implementation there is only one processor (Processor 0),
 so this register should always stay at 0. There are functions that can get the
-value and set the value of this register (`getENTRYHI()` and `setENTRYHI()`
+value and set the value of this register (`getENTRYHI()` and `setENTRYHI()`)
 but in our case they are probably useless.
 - cause: This register indicates the event that caused the trap. Its layout is
 the following:
@@ -122,7 +122,7 @@ of the `mie` register are as follows:
               15-12     11     10-8     7      6-4     3      2-0
             |       |  MEIE  |  0   |  MTIE  |   0  |  MSIE  |  0  |
 
-    Rreading the interrupts ExCode and the binded description I believe that:
+    Reading the interrupts ExCode and the binded description I believe that:
     - MSIE: Stands for "Machine Software Interrupts Enabled" (Interval Timer)
     - MTIE: Stands for "Machine Timer Interrupts Enabled" (CPU Timer)
     - MEIE: Stands for "Machine External Interrupts Enabled" (Devices)
