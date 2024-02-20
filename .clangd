@@ -1,0 +1,5 @@
+# This file is used only for telling the LSP what language to use for the 
+# project. The default language seems to be C++ so we need to force C.
+
+CompileFlags:
+  Add: [-std=c99]
