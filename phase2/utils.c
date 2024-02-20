@@ -38,3 +38,13 @@ int proc_was_in_user_mode(pcb_t *p)
 {
 	return !proc_was_in_kernel_mode(p);
 }
+
+// From gcc/libgcc/memcpy.c
+void *memcpy(void *dest, const void *src, unsigned int len)
+{
+	char *d = dest;
+	const char *s = src;
+	while (len--)
+		*d++ = *s++;
+	return dest;
+}
