@@ -1,15 +1,15 @@
 #include "headers/ssi.h"
 #include "headers/initial.h"
+#include "headers/utils.h"
 #include <uriscv/liburiscv.h>
 
-static pcb_t *create_process(ssi_create_process_t *p);
-static void
-_terminate_process(pcb_t *p); // Should we move the utils function here?
+pcb_t *create_process(pcb_t *sender, ssi_create_process_t *p);
+static void _terminate_process(pcb_t *sender, pcb_t *p);
 static void do_io(ssi_do_io_t *p);
 static cpu_t get_cpu_time(pcb_t *p);
 static void wait_for_clock(pcb_t *p);
 static support_t *get_support_data(pcb_t *p);
-static int get_process_id(pcb_t *p);
+static int get_process_id(pcb_t *sender, void *arg);
 
 void ssi()
 {
@@ -22,14 +22,20 @@ void ssi()
 		switch (payload->service_code) {
 		case CREATEPROCESS: {
 			pcb_t *p = create_process(
+				(pcb_t *)sender,
 				(ssi_create_process_t *)payload->arg);
-			// Send back p to the sender
-			break;
-		}
+
+			unsigned int msg =
+				(p == NULL ? NOPROC : (unsigned int)p);
+
+			SYSCALL(SENDMESSAGE, sender, msg, 0);
+		} break;
 
 		case TERMPROCESS: {
-			_terminate_process((pcb_t *)payload->arg);
-			// ack the sender of the termination. When I kill the sender?
+			_terminate_process((pcb_t *)sender,
+					   (pcb_t *)payload->arg);
+			SYSCALL(SENDMESSAGE, sender, 0,
+				0); // ack ?? If sender is terminated?
 			break;
 		}
 
@@ -41,7 +47,7 @@ void ssi()
 
 		case GETTIME: {
 			cpu_t t = get_cpu_time((pcb_t *)sender);
-			// send reponds
+			SYSCALL(SENDMESSAGE, sender, t, 0);
 			break;
 		}
 
@@ -53,19 +59,20 @@ void ssi()
 
 		case GETSUPPORTPTR: {
 			support_t *s = get_support_data((pcb_t *)sender);
-			// return support data to sender
+			SYSCALL(SENDMESSAGE, sender, (unsigned int)s, 0);
 			break;
 		}
 
 		case GETPROCESSID: {
-			int pid = get_process_id((pcb_t *)sender);
-
+			int pid = get_process_id((pcb_t *)sender, payload->arg);
+			SYSCALL(SENDMESSAGE, sender, pid, 0);
 			break;
 		}
 
 		default: {
-			// If service does not match any of those provided by the SSI, the SSI
-			// should terminate the process and its progeny.
+			// If service does not match any of those provided by the SSI,
+			// the SSI should terminate the process and its progeny.
+			terminate_process((pcb_t *)sender);
 			break;
 		}
 		}
@@ -74,13 +81,29 @@ void ssi()
 	}
 }
 
-pcb_t *create_process(ssi_create_process_t *p)
+pcb_t *create_process(pcb_t *sender, ssi_create_process_t *p)
 {
-	return NULL;
+	pcb_t *new_p = allocPcb();
+	if (new_p == NULL) {
+		return NULL;
+	}
+	new_p->p_s = *(p->state);
+	new_p->p_supportStruct = p->support;
+
+	insertChild(sender, new_p);
+	insertProcQ(&ready_queue, new_p);
+	process_count++;
+
+	return new_p;
 }
 
-static void _terminate_process(pcb_t *p)
+static void _terminate_process(pcb_t *sender, pcb_t *p)
 {
+	// If p does not exist or is not a process?
+	if (p == NULL)
+		terminate_process(sender);
+	else
+		terminate_process(p);
 }
 
 static void do_io(ssi_do_io_t *p)
@@ -89,7 +112,7 @@ static void do_io(ssi_do_io_t *p)
 
 static cpu_t get_cpu_time(pcb_t *p)
 {
-	return 0;
+	return p->p_time;
 }
 
 static void wait_for_clock(pcb_t *p)
@@ -98,10 +121,16 @@ static void wait_for_clock(pcb_t *p)
 
 static support_t *get_support_data(pcb_t *p)
 {
-	return NULL;
+	return p->p_supportStruct;
 }
 
-static int get_process_id(pcb_t *p)
+static int get_process_id(pcb_t *sender, void *arg)
 {
-	return 0;
+	if (arg == 0) {
+		return sender->p_pid;
+	} else if (sender->p_parent == NULL) {
+		return 0;
+	} else {
+		return sender->p_parent->p_pid;
+	}
 }
