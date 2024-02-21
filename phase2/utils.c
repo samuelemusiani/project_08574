@@ -1,6 +1,8 @@
 #include "headers/utils.h"
 #include "headers/initial.h"
 
+#include <uriscv/arch.h>
+
 void terminate_process(pcb_t *p)
 {
 	outChild(p);
@@ -47,4 +49,16 @@ void *memcpy(void *dest, const void *src, unsigned int len)
 	while (len--)
 		*d++ = *s++;
 	return dest;
+}
+
+// This functions maps a memaddr to a number in [0,40] in order to map the
+// command for a device to a position in the pcb_blocked_on_device[] array.
+int comm_add_to_number(memaddr command_addr)
+{
+	int tmp = ((command_addr - (command_addr % 4)) - DEV_REG_START) /
+		  DEV_REG_SIZE;
+	int interrupt_line_number = tmp / 8; // Start from zero
+	int dev_number = tmp - interrupt_line_number * N_DEV_PER_IL;
+
+	return dev_number + interrupt_line_number * N_DEV_PER_IL;
 }

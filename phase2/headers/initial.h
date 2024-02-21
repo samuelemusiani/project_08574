@@ -9,6 +9,7 @@
 #include "../../phase1/headers/msg.h"
 
 #include <uriscv/liburiscv.h>
+#include <uriscv/arch.h>
 
 extern unsigned int process_count;
 extern unsigned int softblock_count;
@@ -19,7 +20,7 @@ extern pcb_t *current_process;
 // network card, printer, and terminal. Furthermore, μRISCV can support up to
 // eight instances of each device type.
 // Terminal devices are actually two independent sub-devices,
-#define MAXDEVICE 48 // (4 + 1 * 2) * 8
+#define MAXDEVICE (N_EXT_IL * N_DEV_PER_IL) // 5 * 8 = 40
 
 extern struct list_head pcb_blocked_on_device[MAXDEVICE]; // Array of queues
 extern struct list_head pcb_blocked_on_clock;
