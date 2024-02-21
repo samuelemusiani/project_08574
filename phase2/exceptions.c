@@ -3,12 +3,15 @@
 #include "headers/interrupts.h"
 #include "headers/utils.h"
 #include "headers/scheduler.h"
+#include <uriscv/liburiscv.h>
 #include <uriscv/types.h>
 #include <uriscv/cpu.h>
 
 static void trap_handler();
 static void syscall_handler();
 static void tlb_handler();
+
+struct list_head unanswered_receive;
 
 void uTLB_RefillHandler()
 {
@@ -40,27 +43,42 @@ void exception_handler()
 
 static void syscall_handler()
 {
-	if (proc_was_in_user_mode((pcb_t *)BIOSDATAPAGE)) {
+	if (proc_was_in_user_mode((state_t *)BIOSDATAPAGE)) {
 		// Generate fake interrupt
 	} else {
-		state_t s = current_process->p_s; //salvo lo stato del processo
-		unsigned int sys_type =
-			s.reg_a0; //prendo dal registro a0 il tipo di syscall
+		unsigned int dest = ((state_t *)BIOSDATAPAGE)->reg_a1;
+		unsigned int msg = ((state_t *)BIOSDATAPAGE)->reg_a2;
+		switch (((state_t *)BIOSDATAPAGE)->reg_a0)
+		{
+		case SENDMESSAGE: {
+			if(searchPcb(&pcbFree_h, ((pcb_t *)dest))) {
+				((state_t *)BIOSDATAPAGE)->reg_a0 = DEST_NOT_EXIST;
+			} else {
+				if(searchPcb(&ready_queue, ((pcb_t *)dest))) { // cerco nella ready queue il processo che mi interessa
+				//devo modificare il registro inbox del pcb a1 (destination) con il payload a2
+				insertMessage(&((pcb_t *)dest)->msg_inbox, (msg_t*) msg);
 
-		if (sys_type) { //send
-			SYSCALL(SENDMESSAGE, (unsigned int)s.reg_a1,
-				(unsigned int)s.reg_a2, 0);
-		} else { //receive bloccate
-			SYSCALL(RECEIVEMESSAGE, (unsigned int)s.reg_a1,
-				(unsigned int)s.reg_a2, 0);
-			//bloccare la syscall
-			//copiare lo stato del processo (che sta nella BIOS data page) nello stato del processo corrente
-			LDST((state_t *)BIOSDATAPAGE);
-			current_process++;
-			//aggiorno il CPU timer per il current process 
-			//current_process->p_time = 1; TODO
-			//chiamo lo scheduler
-			scheduler();
+				} else if (searchPcb(&unanswered_receive, ((pcb_t *)BIOSDATAPAGE))) {//cerco l'elemento nella coda dei messaggi delle receive bloccate
+				pcb_t *msg_list = outProcQ(&unanswered_receive, ((pcb_t *)dest));				
+				insertMessage(&msg_list->msg_inbox, (msg_t*) msg);
+
+				} else {//msg non è ne nella ready_queue che nella coda dei pcb da risvegliare ne nella pcbFree list
+					((state_t *)BIOSDATAPAGE)->reg_a0 = MSGNOGOOD;
+				}
+			}
+			//faccio il load state e ritorno al 
+			LDST(((state_t *)BIOSDATAPAGE));
+			((state_t *)BIOSDATAPAGE)->reg_sp += 4;
+
+			break;
+		}
+		case RECEIVEMESSAGE: {
+		unsigned int sender = ((state_t *)BIOSDATAPAGE)->reg_a1;
+			break;
+		}
+		default:
+			PANIC();
+			break;
 		}
 	}
 }
