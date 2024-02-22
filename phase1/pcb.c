@@ -156,3 +156,17 @@ pcb_t *outChild(pcb_t *p)
 	list_del(&p->p_sib);
 	return p;
 }
+
+//Return 1 if the pcb pointed by p is in the list whose head is pointed to by head. Return 0 otherwise
+int searchPcb(struct list_head *head, pcb_t *p)
+{
+	struct list_head *iter;
+	list_for_each(iter, head)
+	{
+		pcb_t *tmp = container_of(iter, pcb_t, p_list);
+		if (tmp == p) {
+			return 1;
+		}
+	}
+	return 0;
+}
