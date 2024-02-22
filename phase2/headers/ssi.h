@@ -17,5 +17,6 @@ typedef struct interrupt_handler_io_msg {
 } interrupt_handler_io_msg_t;
 
 void ssi();
+int should_pcb_be_soft_blocked(pcb_t *p);
 
 #endif

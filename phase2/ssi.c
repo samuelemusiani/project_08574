@@ -176,3 +176,19 @@ static void answer_wait_for_clock()
 	pcb_t *dest = removeProcQ(&pcb_blocked_on_clock);
 	SYSCALL(SENDMESSAGE, (unsigned int)dest, 0, 0);
 }
+
+// The syscall handler will call this function in order to know if a pcb that
+// has made a sys2 and have to be blocked need to increment the softblock_cout
+// global var.
+//
+// It's used also to know if when a pcb is unlocked, the softblock_cout need
+// to be decremented
+int is_pcb_soft_blocked(pcb_t *p)
+{
+	for (int i = 0; i < MAXDEVICE; i++) {
+		if (searchPcb(&pcb_blocked_on_device[i], p)) {
+			return 1;
+		}
+	}
+	return searchPcb(&pcb_blocked_on_clock, p);
+}
