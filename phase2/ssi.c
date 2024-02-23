@@ -20,18 +20,19 @@ void ssi()
 {
 	while (1) {
 		// Receive a request
-		ssi_payload_t *payload;
+		unsigned int *payload;
 		unsigned int sender = SYSCALL(RECEIVEMESSAGE, ANYMESSAGE,
 					      (unsigned int)(&payload), 0);
 
 		if (sender == INTERRUPT_HANDLER_MSG) {
-			switch (payload->service_code) {
-			case DOIO: {
-				answer_do_io((interrupt_handler_io_msg_t *)
-						     payload->arg);
+			interrupt_handler_io_msg_t payload =
+				(interrupt_handler_io_msg_t)payload;
+			switch (payload.service) {
+			case 0: {
+				answer_do_io(&payload);
 				break;
 			}
-			case CLOCKWAIT: {
+			case 1: {
 				answer_wait_for_clock();
 				break;
 			}
@@ -40,6 +41,7 @@ void ssi()
 				break;
 			}
 		} else {
+			ssi_payload_t *payload = (ssi_payload_t *)payload;
 			switch (payload->service_code) {
 			case CREATEPROCESS: {
 				pcb_t *p = create_process(
@@ -169,7 +171,8 @@ static void answer_do_io(interrupt_handler_io_msg_t *i)
 	// is number (so the position in the pcb_blocked_on_device array
 	// I can lookup the pcb to send the message to and remove him from
 	// the list;
-	pcb_t *dest = removeProcQ(&pcb_blocked_on_device[i->device_number]);
+	int device_number = device_number_from_type_il(i->device_type, i->il);
+	pcb_t *dest = removeProcQ(&pcb_blocked_on_device[device_number]);
 	SYSCALL(SENDMESSAGE, (unsigned int)dest, i->status, 0);
 }
 

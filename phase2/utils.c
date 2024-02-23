@@ -51,6 +51,11 @@ void *memcpy(void *dest, const void *src, unsigned int len)
 	return dest;
 }
 
+int device_number_from_type_il(int type, int il)
+{
+	return type + il * N_DEV_PER_IL;
+}
+
 // This functions maps a memaddr to a number in [0,40] in order to map the
 // command for a device to a position in the pcb_blocked_on_device[] array.
 int comm_add_to_number(memaddr command_addr)
@@ -60,5 +65,5 @@ int comm_add_to_number(memaddr command_addr)
 	int interrupt_line_number = tmp / 8; // Start from zero
 	int dev_number = tmp - interrupt_line_number * N_DEV_PER_IL;
 
-	return dev_number + interrupt_line_number * N_DEV_PER_IL;
+	return device_number_from_type_il(dev_number, interrupt_line_number);
 }
