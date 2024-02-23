@@ -11,11 +11,14 @@
 #include <uriscv/liburiscv.h>
 
 #define INTERRUPT_HANDLER_MSG 0x1 // Fake address for interrupt handler
-typedef struct interrupt_handler_io_msg {
-	char service; // 0 doio, 1 clock
-	char status; // Status of device
-	char device_type; // Device type {0..5}
-	char il; // Interrupt line {0..7}
+typedef union interrupt_handler_io_msg {
+	struct {
+		char service; // 0 doio, 1 clock
+		char status; // Status of device
+		char device_type; // Device type {0..5}
+		char il; // Interrupt line {0..7}
+	} fields;
+	unsigned int payload;
 } interrupt_handler_io_msg_t;
 
 void ssi();
