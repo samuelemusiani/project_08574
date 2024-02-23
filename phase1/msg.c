@@ -105,3 +105,26 @@ msg_t *headMessage(struct list_head *head)
 
 	return container_of(list_next(head), msg_t, m_list);
 }
+
+// search the first element from the message queue accessed via head whose sender is p_ptr.
+// Return 0 if p_ptr is NULL or the message queue was empty or if no message from p ptr was found;
+// otherwise return 1.
+int searchMsg(struct list_head *head, pcb_t *p_ptr)
+{
+	if (list_empty(head))
+		return 0;
+
+	if (p_ptr == NULL)
+		return 0;
+
+	struct list_head *iter;
+	list_for_each(iter, head)
+	{
+		msg_t *tmp = container_of(iter, msg_t, m_list);
+		if (tmp->m_sender == p_ptr) {
+			return 1;
+		}
+	}
+
+	return 0;
+}

@@ -5,6 +5,9 @@
 #include "../../headers/listx.h"
 #include "../../headers/types.h"
 
+extern struct list_head pcbFree_h;
+extern pcb_t pcbTable[MAXPROC];
+
 void initPcbs();
 void freePcb(pcb_t *p);
 pcb_t *allocPcb();

@@ -2,12 +2,20 @@
 #include "headers/initial.h"
 #include "headers/interrupts.h"
 #include "headers/utils.h"
+#include "headers/scheduler.h"
+#include "headers/ssi.h"
 
+#include <uriscv/liburiscv.h>
+#include <uriscv/types.h>
 #include <uriscv/cpu.h>
 
 static void trap_handler();
 static void syscall_handler();
 static void tlb_handler();
+static void blockSys();
+static void send_message(state_t *p, msg_t *msg);
+
+LIST_HEAD(blocked_on_receive);
 
 void uTLB_RefillHandler()
 {
@@ -40,8 +48,92 @@ void exception_handler()
 static void syscall_handler()
 {
 	if (proc_was_in_user_mode((pcb_t *)BIOSDATAPAGE)) {
-		// Generate fake interrupt
+		// Generate fake trap
+		int trap_cause = 29;
+		setCAUSE(trap_cause); //sys in usermode
+		((state_t *)BIOSDATAPAGE)->cause = trap_cause;
+		trap_handler();
+	} else {
+		pcb_t *dest = (pcb_t *)((state_t *)BIOSDATAPAGE)->reg_a1;
+		unsigned int payload = ((state_t *)BIOSDATAPAGE)->reg_a2;
+
+		switch (((state_t *)BIOSDATAPAGE)->reg_a0) {
+		case SENDMESSAGE: {
+			if (dest < pcbTable || dest > pcbTable + MAXPROC - 1) {
+				((state_t *)BIOSDATAPAGE)->reg_a0 = MSGNOGOOD;
+			} else if (searchPcb(&pcbFree_h, ((pcb_t *)dest))) {
+				((state_t *)BIOSDATAPAGE)->reg_a0 =
+					DEST_NOT_EXIST;
+			} else {
+				msg_t *msg = allocMsg();
+				msg->m_payload = payload;
+				msg->m_sender = current_process;
+
+				pcb_t *p = outProcQ(&blocked_on_receive,
+						    ((pcb_t *)dest));
+				if (p) {
+					insertProcQ(&ready_queue,
+						    ((pcb_t *)dest));
+					if (was_pcb_soft_blocked(dest))
+						softblock_count--;
+					send_message(&dest->p_s, msg);
+
+				} else {
+					insertMessage(&dest->msg_inbox, msg);
+				}
+				((state_t *)BIOSDATAPAGE)->reg_a0 = 0;
+			}
+			((state_t *)BIOSDATAPAGE)->reg_sp += 4;
+			LDST(((state_t *)BIOSDATAPAGE));
+
+			break;
+		}
+		case RECEIVEMESSAGE: {
+			pcb_t *sender =
+				(pcb_t *)((state_t *)BIOSDATAPAGE)->reg_a1;
+			msg_t *msg = popMessage(&((pcb_t *)sender)->msg_inbox,
+						((pcb_t *)sender));
+
+			if (msg) { //found message from sender
+				if (was_pcb_soft_blocked(current_process))
+					softblock_count--;
+				send_message((state_t *)BIOSDATAPAGE, msg);
+				LDST(((state_t *)BIOSDATAPAGE));
+			} else { //no message found
+				//the schedule will be called and all following code will not be executed
+				blockSys();
+			}
+			break;
+		}
+		default:
+			PANIC();
+			break;
+		}
 	}
+}
+
+//the schedule will be called and all following code will not be executed
+static void blockSys()
+{
+	insertProcQ(&blocked_on_receive, current_process);
+	current_process->p_s = *((state_t *)BIOSDATAPAGE);
+	if (should_pcb_be_soft_blocked(current_process))
+		softblock_count++;
+	current_process = NULL;
+	//Aggiorno il CPU time TODO
+	scheduler();
+}
+
+static void send_message(state_t *p, msg_t *msg)
+{
+	p->reg_a0 = (unsigned int)msg->m_sender;
+	memaddr *payload_destination = (memaddr *)p->reg_a2;
+	//save the payload in the address pointed by the reg_a2
+	if (payload_destination) {
+		*payload_destination = (unsigned int)msg->m_payload;
+	}
+	p->reg_sp += 4;
+	freeMsg(msg);
 }
 
 static void trap_handler()
