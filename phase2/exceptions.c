@@ -14,6 +14,7 @@ static void syscall_handler();
 static void tlb_handler();
 static void blockSys();
 static void send_message(state_t *p, msg_t *msg);
+void send_message_to_ssi(unsigned int payload);
 
 LIST_HEAD(blocked_on_receive);
 
@@ -134,6 +135,20 @@ static void send_message(state_t *p, msg_t *msg)
 	}
 	p->reg_sp += 4;
 	freeMsg(msg);
+}
+
+void send_message_to_ssi(unsigned int payload)
+{
+	msg_t *msg = allocMsg();
+	msg->m_payload = payload;
+	msg->m_sender = (pcb_t *)INTERRUPT_HANDLER_MSG;
+	pcb_t *p = outProcQ(&blocked_on_receive, ssi_pcb);
+	if (p) {
+		insertProcQ(&ready_queue, ssi_pcb);
+		send_message(&ssi_pcb->p_s, msg);
+	} else {
+		insertMessage(&ssi_pcb->msg_inbox, msg);
+	}
 }
 
 static void trap_handler()
