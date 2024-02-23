@@ -11,7 +11,6 @@ static void trap_handler();
 static void syscall_handler();
 static void tlb_handler();
 static void blockSys();
-static int deviceListEmpty();
 
 LIST_HEAD(blocked_on_receive);
 
