@@ -14,7 +14,6 @@ static void syscall_handler();
 static void tlb_handler();
 static void blockSys();
 static void send_message(state_t *p, msg_t *msg);
-void send_message_to_ssi(unsigned int payload);
 
 LIST_HEAD(blocked_on_receive);
 
