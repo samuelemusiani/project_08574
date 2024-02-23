@@ -14,6 +14,8 @@ static int get_process_id(pcb_t *sender, void *arg);
 static void answer_do_io(interrupt_handler_io_msg_t *i);
 static void answer_wait_for_clock();
 
+LIST_HEAD(pcb_blocked_after_io);
+
 void ssi()
 {
 	while (1) {
@@ -191,4 +193,25 @@ int is_pcb_soft_blocked(pcb_t *p)
 		}
 	}
 	return searchPcb(&pcb_blocked_on_clock, p);
+}
+// The syscall handler will call this function in order to know if a pcb that
+// has made a sys2 and have to be blocked need to increment the softblock_cout
+// global var.
+// Return 1 in need to increment, 0 otherwise
+int should_pcb_be_soft_blocked(pcb_t *p)
+{
+	for (int i = 0; i < MAXDEVICE; i++) {
+		if (searchPcb(&pcb_blocked_on_device[i], p)) {
+			return 1;
+		}
+	}
+	return searchPcb(&pcb_blocked_on_clock, p);
+}
+
+// The syscall handler will call this function in order to know if a pcb that
+// was blocked on sys2 need to decrement the softblock_cout global var.
+// Return 1 in need to increment, 0 otherwise
+int was_pcb_soft_blocked(pcb_t *p)
+{
+	return !!outProcQ(&pcb_blocked_after_io, p);
 }
