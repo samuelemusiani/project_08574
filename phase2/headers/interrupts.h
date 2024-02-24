@@ -9,6 +9,7 @@
 #include "../../phase1/headers/msg.h"
 
 #include <uriscv/liburiscv.h>
+#include "uriscv/arch.h"
 
 void interrupt_handler();
 
