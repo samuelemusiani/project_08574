@@ -180,8 +180,10 @@ static void answer_do_io(int device_type, int il, int status)
 
 static void answer_wait_for_clock()
 {
-	pcb_t *dest = removeProcQ(&pcb_blocked_on_clock);
-	SYSCALL(SENDMESSAGE, (unsigned int)dest, 0, 0);
+	pcb_t *dest;
+	while ((dest = removeProcQ(&pcb_blocked_on_clock))) {
+		SYSCALL(SENDMESSAGE, (unsigned int)dest, 0, 0);
+	}
 }
 
 // The syscall handler will call this function in order to know if a pcb that
