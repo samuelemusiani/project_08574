@@ -14,6 +14,6 @@ void terminate_process(pcb_t *p);
 int proc_was_in_kernel_mode(pcb_t *p);
 int proc_was_in_user_mode(pcb_t *p);
 int comm_add_to_number(memaddr command_addr);
-int device_number_from_type_il(int type, int il);
+int hash_from_device_type_number(int type, int il);
 
 #endif

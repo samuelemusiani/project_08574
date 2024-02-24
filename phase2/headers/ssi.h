@@ -15,8 +15,8 @@ typedef union interrupt_handler_io_msg {
 	struct {
 		char service; // 0 doio, 1 clock
 		char status; // Status of device
-		char device_type; // Device type {0..5}
-		char il; // Interrupt line {0..7}
+		char device_type; // Device type {0..4}
+		char device_number; // Interrupt line {0..6}
 	} fields;
 	unsigned int payload;
 } interrupt_handler_io_msg_t;
