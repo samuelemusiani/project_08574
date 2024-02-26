@@ -31,12 +31,12 @@ void terminate_process(pcb_t *p)
 	freePcb(p);
 }
 
-int proc_was_in_kernel_mode(pcb_t *p)
+int proc_was_in_kernel_mode(state_t *p)
 {
-	return p->p_s.status & MSTATUS_MIE_MASK;
+	return p->status & MSTATUS_MIE_MASK;
 }
 
-int proc_was_in_user_mode(pcb_t *p)
+int proc_was_in_user_mode(state_t *p)
 {
 	return !proc_was_in_kernel_mode(p);
 }
