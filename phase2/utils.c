@@ -33,7 +33,7 @@ void terminate_process(pcb_t *p)
 
 int proc_was_in_kernel_mode(state_t *p)
 {
-	return p->status & MSTATUS_MIE_MASK;
+	return p->status & MSTATUS_MPP_M;
 }
 
 int proc_was_in_user_mode(state_t *p)
