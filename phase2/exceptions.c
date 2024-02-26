@@ -13,7 +13,7 @@ static void trap_handler();
 static void syscall_handler();
 static void tlb_handler();
 static void blockSys();
-static void send_message(state_t *p, msg_t *msg);
+static void deliver_message(state_t *p, msg_t *msg);
 static void pass_up_or_die(int excp_value);
 
 LIST_HEAD(blocked_on_receive);
@@ -62,7 +62,7 @@ static void syscall_handler()
 		case SENDMESSAGE: {
 			if (dest < pcbTable || dest > pcbTable + MAXPROC - 1) {
 				((state_t *)BIOSDATAPAGE)->reg_a0 = MSGNOGOOD;
-			} else if (searchPcb(&pcbFree_h, ((pcb_t *)dest))) {
+			} else if (searchPcb(&pcbFree_h, dest)) {
 				((state_t *)BIOSDATAPAGE)->reg_a0 =
 					DEST_NOT_EXIST;
 			} else {
@@ -77,14 +77,14 @@ static void syscall_handler()
 						    ((pcb_t *)dest));
 					if (was_pcb_soft_blocked(dest))
 						softblock_count--;
-					send_message(&dest->p_s, msg);
+					deliver_message(&dest->p_s, msg);
 
 				} else {
 					insertMessage(&dest->msg_inbox, msg);
 				}
 				((state_t *)BIOSDATAPAGE)->reg_a0 = 0;
 			}
-			((state_t *)BIOSDATAPAGE)->reg_sp += 4;
+			((state_t *)BIOSDATAPAGE)->pc_epc += 4;
 			LDST(((state_t *)BIOSDATAPAGE));
 
 			break;
@@ -92,13 +92,13 @@ static void syscall_handler()
 		case RECEIVEMESSAGE: {
 			pcb_t *sender =
 				(pcb_t *)((state_t *)BIOSDATAPAGE)->reg_a1;
-			msg_t *msg = popMessage(&((pcb_t *)sender)->msg_inbox,
+			msg_t *msg = popMessage(&current_process->msg_inbox,
 						((pcb_t *)sender));
 
 			if (msg) { //found message from sender
 				if (was_pcb_soft_blocked(current_process))
 					softblock_count--;
-				send_message((state_t *)BIOSDATAPAGE, msg);
+				deliver_message((state_t *)BIOSDATAPAGE, msg);
 				LDST(((state_t *)BIOSDATAPAGE));
 			} else { //no message found
 				//the schedule will be called and all following code will not be executed
@@ -125,7 +125,7 @@ static void blockSys()
 	scheduler();
 }
 
-static void send_message(state_t *p, msg_t *msg)
+static void deliver_message(state_t *p, msg_t *msg)
 {
 	p->reg_a0 = (unsigned int)msg->m_sender;
 	memaddr *payload_destination = (memaddr *)p->reg_a2;
@@ -133,7 +133,7 @@ static void send_message(state_t *p, msg_t *msg)
 	if (payload_destination) {
 		*payload_destination = (unsigned int)msg->m_payload;
 	}
-	p->reg_sp += 4;
+	p->pc_epc += 4;
 	freeMsg(msg);
 }
 
@@ -145,7 +145,7 @@ void send_message_to_ssi(unsigned int payload)
 	pcb_t *p = outProcQ(&blocked_on_receive, ssi_pcb);
 	if (p) {
 		insertProcQ(&ready_queue, ssi_pcb);
-		send_message(&ssi_pcb->p_s, msg);
+		deliver_message(&ssi_pcb->p_s, msg);
 	} else {
 		insertMessage(&ssi_pcb->msg_inbox, msg);
 	}
