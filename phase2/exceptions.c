@@ -14,6 +14,7 @@ static void syscall_handler();
 static void tlb_handler();
 static void blockSys();
 static void send_message(state_t *p, msg_t *msg);
+static void pass_up_or_die(int excp_value);
 
 LIST_HEAD(blocked_on_receive);
 
@@ -106,7 +107,7 @@ static void syscall_handler()
 			break;
 		}
 		default:
-			PANIC();
+			pass_up_or_die(GENERALEXCEPT);
 			break;
 		}
 	}
@@ -152,8 +153,20 @@ void send_message_to_ssi(unsigned int payload)
 
 static void trap_handler()
 {
+	pass_up_or_die(GENERALEXCEPT);
 }
 
 static void tlb_handler()
 {
+	pass_up_or_die(PGFAULTEXCEPT);
+}
+
+static void pass_up_or_die(int excp_value) {
+	if (current_process->p_supportStruct == NULL) {
+		terminate_process(current_process);
+	} else {
+		current_process->p_supportStruct->sup_exceptState[excp_value] = *((state_t *)BIOSDATAPAGE);
+		context_t *c = &current_process->p_supportStruct->sup_exceptContext[excp_value];
+		LDCXT(c->stackPtr, c->status, c->pc);
+		}
 }
