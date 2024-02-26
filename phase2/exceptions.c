@@ -34,7 +34,7 @@ void exception_handler()
 	} else {
 		unsigned int excCode = mcause & GETEXECCODE;
 		if ((excCode >= 0 && excCode <= 7) ||
-		    (excCode >= 11 && excCode <= 24)) {
+		    (excCode > 11 && excCode < 24)) {
 			trap_handler();
 		} else if (excCode >= 8 && excCode <= 11) {
 			syscall_handler();
@@ -48,7 +48,7 @@ void exception_handler()
 
 static void syscall_handler()
 {
-	if (proc_was_in_user_mode((pcb_t *)BIOSDATAPAGE)) {
+	if (proc_was_in_user_mode((state_t *)BIOSDATAPAGE)) {
 		// Generate fake trap
 		int trap_cause = 29;
 		setCAUSE(trap_cause); //sys in usermode
