@@ -67,8 +67,7 @@ static void device_interrupt_handler(unsigned int iln)
      * ??? Is "device busy" an error code ???
     */
 		char transm_status = devAddrBase->term.transm_status;
-		if (transm_status == 0 || transm_status == 2 ||
-		    transm_status == 4 || transm_status == 5) {
+		if (transm_status != 1 && transm_status != 3) {
 			statusCode = transm_status;
 			devAddrBase->term.transm_command = ACK;
 		} else {
