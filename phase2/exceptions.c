@@ -161,12 +161,15 @@ static void tlb_handler()
 	pass_up_or_die(PGFAULTEXCEPT);
 }
 
-static void pass_up_or_die(int excp_value) {
+static void pass_up_or_die(int excp_value)
+{
 	if (current_process->p_supportStruct == NULL) {
 		terminate_process(current_process);
 	} else {
-		current_process->p_supportStruct->sup_exceptState[excp_value] = *((state_t *)BIOSDATAPAGE);
-		context_t *c = &current_process->p_supportStruct->sup_exceptContext[excp_value];
+		current_process->p_supportStruct->sup_exceptState[excp_value] =
+			*((state_t *)BIOSDATAPAGE);
+		context_t *c = &current_process->p_supportStruct
+					->sup_exceptContext[excp_value];
 		LDCXT(c->stackPtr, c->status, c->pc);
-		}
+	}
 }
