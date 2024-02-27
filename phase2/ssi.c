@@ -20,13 +20,13 @@ void ssi()
 {
 	while (1) {
 		// Receive a request
-		unsigned int payload;
+		unsigned int payload_tmp;
 		unsigned int sender = SYSCALL(RECEIVEMESSAGE, ANYMESSAGE,
-					      (unsigned int)(&payload), 0);
+					      (unsigned int)(&payload_tmp), 0);
 
 		if (sender == INTERRUPT_HANDLER_MSG) {
 			interrupt_handler_io_msg_t msg = {
-				.payload = (unsigned int)payload
+				.payload = (unsigned int)payload_tmp
 			};
 			switch (msg.fields.service) {
 			case 0: {
@@ -44,7 +44,7 @@ void ssi()
 				break;
 			}
 		} else {
-			ssi_payload_t *payload = (ssi_payload_t *)payload;
+			ssi_payload_t *payload = (ssi_payload_t *)payload_tmp;
 			switch (payload->service_code) {
 			case CREATEPROCESS: {
 				pcb_t *p = create_process(
