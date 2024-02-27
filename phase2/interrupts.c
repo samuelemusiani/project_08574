@@ -57,7 +57,7 @@ static void device_interrupt_handler(unsigned int iln)
 	if (dev_n == N_DEV_PER_IL)
 		PANIC();
 
-	devreg_t *devAddrBase = (devreg_t *)DEV_REG_ADDR(iln, 1 << dev_n);
+	devreg_t *devAddrBase = (devreg_t *)DEV_REG_ADDR(iln, dev_n);
 	char statusCode;
 	if (iln == IL_TERMINAL) {
 		/*
