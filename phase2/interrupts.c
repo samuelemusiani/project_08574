@@ -27,7 +27,7 @@ void interrupt_handler()
 		it_interrupt_handler();
 	else if (mip & 1 << IL_CPUTIMER)
 		plt_interrupt_handler();
-	else if (mip & 1 << 11) {
+	else {
 		char iln = DEV_IL_START;
 		char max_il = DEV_IL_START + N_EXT_IL;
 		while (iln < max_il && !(mip & 1 << iln))
@@ -35,8 +35,7 @@ void interrupt_handler()
 		if (iln == max_il)
 			PANIC();
 		device_interrupt_handler(iln);
-	} else
-		PANIC();
+	}
 }
 
 static void device_interrupt_handler(unsigned int iln)

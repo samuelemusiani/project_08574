@@ -154,6 +154,9 @@ of the `mie` register are as follows:
     - MTIP: Stands for "Machine Timer Interrupts Pending" (CPU Timer)
     - MEIP: Stands for "Machine External Interrupts Pending" (Devices)
 
+    MEIP does not work. If an external device sends an interrupt it will be 1 
+    corresponding bit based on the table above.
+
 - gpr[STATE_GPR_LEN]: The `GPRs` are the *General Purpose Registers*. There are
 32 GPRs (STATE_GPR_LEN) and not all of them are useful. In <uriscv/types.h> 
 there are some macros that allow a more human way of addressing these registers.
