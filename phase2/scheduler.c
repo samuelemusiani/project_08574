@@ -1,11 +1,12 @@
 #include "headers/scheduler.h"
 #include "headers/initial.h"
+#include "headers/exceptions.h"
 #include <uriscv/liburiscv.h>
 
 void scheduler()
 {
 	if (process_count == 1 &&
-	    headProcQ(&ready_queue) ==
+	    headProcQ(&blocked_on_receive) ==
 		    ssi_pcb) { // Change when make the fake address
 		HALT();
 	}

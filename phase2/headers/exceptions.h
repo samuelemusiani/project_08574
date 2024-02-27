@@ -14,4 +14,6 @@ void uTLB_RefillHandler();
 void exception_handler();
 void send_message_to_ssi(unsigned int payload);
 
+extern struct list_head blocked_on_receive;
+
 #endif
