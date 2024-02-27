@@ -101,7 +101,7 @@ static void syscall_handler()
 				deliver_message((state_t *)BIOSDATAPAGE, msg);
 				LDST(((state_t *)BIOSDATAPAGE));
 			} else { //no message found
-				//the schedule will be called and all following code will not be executed
+				//the scheduler will be called and all following code will not be executed
 				blockSys();
 			}
 			break;
@@ -113,7 +113,6 @@ static void syscall_handler()
 	}
 }
 
-//the schedule will be called and all following code will not be executed
 static void blockSys()
 {
 	insertProcQ(&blocked_on_receive, current_process);
