@@ -138,7 +138,7 @@ static void _terminate_process(pcb_t *sender, pcb_t *p)
 static void do_io(pcb_t *sender, ssi_do_io_t *p)
 {
 	*(p->commandAddr) = p->commandValue;
-	int n = comm_add_to_number(*(p->commandAddr));
+	int n = comm_add_to_number((unsigned int)p->commandAddr);
 	insertProcQ(&pcb_blocked_on_device[n], sender);
 }
 
