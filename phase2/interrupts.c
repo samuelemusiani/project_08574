@@ -28,10 +28,12 @@ void interrupt_handler()
 	else if (mip & 1 << IL_CPUTIMER)
 		plt_interrupt_handler();
 	else {
-		char iln = DEV_IL_START;
-		char max_il = DEV_IL_START + N_EXT_IL;
-		while (iln < max_il && !(mip & 1 << iln))
+		int iln = DEV_IL_START;
+		int max_il = DEV_IL_START + N_EXT_IL;
+		while (iln < max_il && !(mip & 1 << iln)) {
 			iln++;
+		}
+
 		if (iln == max_il)
 			PANIC();
 		device_interrupt_handler(iln);
@@ -45,9 +47,11 @@ static void device_interrupt_handler(unsigned int iln)
 	 * 8 bit, each bit represents a device.
 	 * We need the device with the lower number that has 1 on the bit corresponding to it.
 	*/
-	char bitmap = *(char *)CDEV_BITMAP_ADDR(iln);
-	char dev_n = 0;
-	while (dev_n < N_DEV_PER_IL && !(bitmap & 1 << dev_n)) {
+	int bitmap = *(char *)CDEV_BITMAP_ADDR(iln);
+	int dev_n = 0;
+	int tmp1 = bitmap & (1 << dev_n);
+	int cond = !tmp1;
+	while (dev_n < N_DEV_PER_IL && cond) {
 		dev_n++;
 	}
 	if (dev_n == N_DEV_PER_IL)
