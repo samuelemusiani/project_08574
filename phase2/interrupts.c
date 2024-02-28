@@ -52,9 +52,9 @@ static void device_interrupt_handler(unsigned int iln)
 	int tmp1 = bitmap & (1 << dev_n);
 	int cond = !tmp1;
 	while (dev_n < N_DEV_PER_IL && cond) {
+		dev_n++;
 		tmp1 = bitmap & (1 << dev_n);
 		cond = !tmp1;
-		dev_n++;
 	}
 	if (dev_n == N_DEV_PER_IL)
 		PANIC();
