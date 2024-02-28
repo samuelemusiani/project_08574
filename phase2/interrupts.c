@@ -94,7 +94,10 @@ static void device_interrupt_handler(unsigned int iln)
 					   .fields.device_number = dev_n,
 					   .fields.status = statusCode };
 	send_message_to_ssi(msg.payload);
-	LDST((state_t *)BIOSDATAPAGE);
+	if (current_process != NULL)
+		scheduler();
+	else
+		LDST((state_t *)BIOSDATAPAGE);
 }
 
 static void plt_interrupt_handler()
@@ -110,5 +113,8 @@ static void it_interrupt_handler()
 	LDIT(PSECOND);
 	interrupt_handler_io_msg_t msg = { .fields.service = 1 };
 	send_message_to_ssi(msg.payload);
-	LDST((state_t *)BIOSDATAPAGE);
+	if (current_process != NULL)
+		scheduler();
+	else
+		LDST((state_t *)BIOSDATAPAGE);
 }
