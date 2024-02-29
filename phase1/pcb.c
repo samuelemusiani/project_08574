@@ -44,6 +44,7 @@ pcb_t *allocPcb()
 
 	p->p_pid = next_pid;
 	next_pid++;
+	p->do_io = 0;
 
 	return p;
 }
