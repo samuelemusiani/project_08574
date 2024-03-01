@@ -188,48 +188,7 @@ static void answer_wait_for_clock()
 	}
 }
 
-// The syscall handler will call this function in order to know if a pcb that
-// has made a sys2 and have to be blocked need to increment the softblock_count
-// global var.
-//
-// It's used also to know if when a pcb is unlocked, the softblock_count needs
-// to be decremented
-/*
-int is_pcb_soft_blocked(pcb_t *p)
+int is_a_softblocking_request(ssi_payload_t *p)
 {
-	for (int i = 0; i < MAXDEVICE; i++) {
-		if (searchPcb(&pcb_blocked_on_device[i], p)) {
-			return 1;
-		}
-	}
-	return searchPcb(&pcb_blocked_on_clock, p);
+	return p->service_code == DOIO || p->service_code == CLOCKWAIT;
 }
- */
-
-// The syscall handler will call this function in order to know if a pcb that
-// has made a sys2 and have to be blocked need to increment the softblock_count
-// global var.
-// Return 1 if it needs to increment, 0 otherwise
-
-/*
-int should_pcb_be_soft_blocked(pcb_t *p)
-{
-	for (int i = 0; i < MAXDEVICE; i++) {
-		if (searchPcb(&pcb_blocked_on_device[i], p)) {
-			return 1;
-		}
-	}
-	return searchPcb(&pcb_blocked_on_clock, p);
-}
- */
-
-// The syscall handler will call this function in order to know if a pcb that
-// was blocked on sys2 need to decrement the softblock_cout global var.
-// Return 1 if it needs to increment, 0 otherwise
-
-/*
-int was_pcb_soft_blocked(pcb_t *p)
-{
-	return !!outProcQ(&pcb_blocked_after_io, p);
-}
- */

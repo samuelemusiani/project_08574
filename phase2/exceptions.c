@@ -68,16 +68,23 @@ static void syscall_handler()
 				msg->m_payload = payload;
 				msg->m_sender = current_process;
 
+				if (is_a_softblocking_request(
+					    (ssi_payload_t *)payload)) {
+					current_process->do_io = 1;
+				}
+
 				if (!searchPcb(&ready_queue, dest) &&
 				    dest != current_process) {
 					// if dest is not in the ready queue,
 					// it means that it is blocked on a receive message
 					insertProcQ(&ready_queue,
 						    ((pcb_t *)dest));
-					// if (was_pcb_soft_blocked(dest))
-					//	softblock_count--;
-					softblock_count -= dest->do_io;
-					dest->do_io = 0;
+
+					if (dest->do_io) {
+						dest->do_io = 0;
+						softblock_count--;
+					}
+
 					deliver_message(&dest->p_s, msg);
 
 				} else {
@@ -97,10 +104,9 @@ static void syscall_handler()
 						((pcb_t *)sender));
 
 			if (msg) { //found message from sender
-				// if (was_pcb_soft_blocked(current_process))
-				//	softblock_count--;
-				softblock_count -= current_process->do_io;
-				current_process->do_io = 0;
+				if (current_process->do_io) {
+					current_process->do_io = 0;
+				}
 				deliver_message((state_t *)BIOSDATAPAGE, msg);
 				LDST(((state_t *)BIOSDATAPAGE));
 			} else { //no message found
