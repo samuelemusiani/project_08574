@@ -7,21 +7,12 @@ void terminate_process(pcb_t *p)
 {
 	outChild(p);
 
-	int was_waiting = 0;
-
-	// If waiting for IO we should remove him for the queue
-	for (int i = 0; i < MAXDEVICE; i++) {
-		// TODO: Optimize, I can wait only on one device
-		if (outProcQ(&pcb_blocked_on_device[i], p) == p)
-			was_waiting = 1;
-	}
-
-	// If waiting for clock we should remove him for the queue
-	if (outProcQ(&pcb_blocked_on_clock, p) == p)
-		was_waiting = 1;
-
 	process_count--;
-	softblock_count -= was_waiting;
+	// There is a small case in which the process have do_io set to 1 but is not
+	// waiting yet (between a SEND and a RECEIVE). Because is not waiting, the
+	// softblock_count is not really incremented. We should check if this process
+	// has olready entered the blocked state.
+	softblock_count -= p->do_io;
 
 	// We should terminate all his progenesis
 	while (!emptyChild(p)) {
