@@ -68,7 +68,8 @@ static void syscall_handler()
 				msg->m_payload = payload;
 				msg->m_sender = current_process;
 
-				if (is_a_softblocking_request(
+				if (dest == ssi_pcb &&
+				    is_a_softblocking_request(
 					    (ssi_payload_t *)payload)) {
 					current_process->do_io = 1;
 				}
