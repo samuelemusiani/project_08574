@@ -16,8 +16,6 @@ static void blockSys();
 static void deliver_message(state_t *p, msg_t *msg);
 static void pass_up_or_die(int excp_value);
 
-LIST_HEAD(blocked_on_receive);
-
 void uTLB_RefillHandler()
 {
 	setENTRYHI(0x80000000);
@@ -70,13 +68,16 @@ static void syscall_handler()
 				msg->m_payload = payload;
 				msg->m_sender = current_process;
 
-				pcb_t *p = outProcQ(&blocked_on_receive,
-						    ((pcb_t *)dest));
-				if (p) {
+				if (!searchPcb(&ready_queue, dest) &&
+				    dest != current_process) {
+					// if dest is not in the ready queue,
+					// it means that it is blocked on a receive message
 					insertProcQ(&ready_queue,
 						    ((pcb_t *)dest));
-					if (was_pcb_soft_blocked(dest))
-						softblock_count--;
+					// if (was_pcb_soft_blocked(dest))
+					//	softblock_count--;
+					softblock_count -= dest->do_io;
+					dest->do_io = 0;
 					deliver_message(&dest->p_s, msg);
 
 				} else {
@@ -96,8 +97,10 @@ static void syscall_handler()
 						((pcb_t *)sender));
 
 			if (msg) { //found message from sender
-				if (was_pcb_soft_blocked(current_process))
-					softblock_count--;
+				// if (was_pcb_soft_blocked(current_process))
+				//	softblock_count--;
+				softblock_count -= current_process->do_io;
+				current_process->do_io = 0;
 				deliver_message((state_t *)BIOSDATAPAGE, msg);
 				LDST(((state_t *)BIOSDATAPAGE));
 			} else { //no message found
@@ -115,9 +118,8 @@ static void syscall_handler()
 
 static void blockSys()
 {
-	insertProcQ(&blocked_on_receive, current_process);
 	current_process->p_s = *((state_t *)BIOSDATAPAGE);
-	if (should_pcb_be_soft_blocked(current_process))
+	if (current_process->do_io)
 		softblock_count++;
 	current_process = NULL;
 	//Aggiorno il CPU time TODO
@@ -141,8 +143,7 @@ void send_message_to_ssi(unsigned int payload)
 	msg_t *msg = allocMsg();
 	msg->m_payload = payload;
 	msg->m_sender = (pcb_t *)INTERRUPT_HANDLER_MSG;
-	pcb_t *p = outProcQ(&blocked_on_receive, ssi_pcb);
-	if (p) {
+	if (!searchPcb(&ready_queue, ssi_pcb) && ssi_pcb != current_process) {
 		insertProcQ(&ready_queue, ssi_pcb);
 		deliver_message(&ssi_pcb->p_s, msg);
 	} else {

@@ -52,7 +52,7 @@ void *memcpy(void *dest, const void *src, unsigned int len)
 }
 
 // type = {0..4}
-// number = {0..6}
+// number = {0..7}
 int hash_from_device_type_number(int type, int number)
 {
 	return type * N_DEV_PER_IL + number;

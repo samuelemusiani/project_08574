@@ -6,8 +6,8 @@
 void scheduler()
 {
 	if (process_count == 1 &&
-	    headProcQ(&blocked_on_receive) ==
-		    ssi_pcb) { // Change when make the fake address
+	    !searchPcb(&ready_queue,
+		       ssi_pcb)) { // Change when make the fake address
 		HALT();
 	}
 
