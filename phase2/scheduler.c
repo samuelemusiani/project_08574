@@ -14,7 +14,7 @@ void scheduler()
 	if (list_empty(&ready_queue)) {
 		if (softblock_count > 0) {
 			setMIE(MIE_ALL ^ MIE_MTIE_MASK);
-			setSTATUS(MSTATUS_MIE_BIT);
+			setSTATUS(1 << MSTATUS_MIE_BIT);
 			WAIT();
 		} else { // softblock_count <= 0
 			PANIC(); // DEADLOCK
