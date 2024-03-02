@@ -60,3 +60,13 @@ int comm_add_to_number(memaddr command_addr)
 
 	return hash_from_device_type_number(interrupt_line_number, dev_number);
 }
+
+void update_cpu_time()
+{
+	cpu_t current_TOD;
+	STCK(current_TOD);
+	if (current_process != NULL)
+	{
+		current_process->p_time += current_TOD - tod_timer;
+	}
+}

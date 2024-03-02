@@ -129,6 +129,7 @@ static void syscall_handler()
 static void blockSys()
 {
 	current_process->p_s = *((state_t *)BIOSDATAPAGE);
+	update_cpu_time();
 	if (current_process->do_io)
 		softblock_count++;
 	current_process = NULL;

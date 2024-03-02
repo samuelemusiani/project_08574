@@ -13,6 +13,7 @@
 
 extern unsigned int process_count;
 extern unsigned int softblock_count;
+extern cpu_t tod_timer;
 extern struct list_head ready_queue;
 extern pcb_t *current_process;
 

@@ -23,5 +23,6 @@ void scheduler()
 
 	current_process = removeProcQ(&ready_queue);
 	setTIMER(TIMESLICE);
+	STCK(tod_timer);
 	LDST(&current_process->p_s);
 }
