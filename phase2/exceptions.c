@@ -16,6 +16,8 @@ static void blockSys();
 static void deliver_message(state_t *p, msg_t *msg);
 static void pass_up_or_die(int excp_value);
 
+static int is_waiting_for_me(pcb_t *sender, pcb_t *dest);
+
 void uTLB_RefillHandler()
 {
 	setENTRYHI(0x80000000);
@@ -75,7 +77,8 @@ static void syscall_handler()
 				}
 
 				if (!searchPcb(&ready_queue, dest) &&
-				    dest != current_process) {
+				    dest != current_process &&
+				    is_waiting_for_me(current_process, dest)) {
 					// if dest is not in the ready queue,
 					// it means that it is blocked on a receive message
 					insertProcQ(&ready_queue,
@@ -143,6 +146,12 @@ static void deliver_message(state_t *p, msg_t *msg)
 	}
 	p->pc_epc += 4;
 	freeMsg(msg);
+}
+
+static int is_waiting_for_me(pcb_t *sender, pcb_t *dest)
+{
+	return dest->p_s.reg_a1 == (unsigned int)sender ||
+	       dest->p_s.reg_a1 == ANYMESSAGE;
 }
 
 void send_message_to_ssi(unsigned int payload)
