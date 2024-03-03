@@ -65,8 +65,7 @@ void update_cpu_time()
 {
 	cpu_t current_TOD;
 	STCK(current_TOD);
-	if (current_process != NULL)
-	{
+	if (current_process != NULL) {
 		current_process->p_time += current_TOD - tod_timer;
 	}
 }
