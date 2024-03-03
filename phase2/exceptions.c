@@ -160,7 +160,8 @@ void send_message_to_ssi(unsigned int payload)
 	msg_t *msg = allocMsg();
 	msg->m_payload = payload;
 	msg->m_sender = (pcb_t *)INTERRUPT_HANDLER_MSG;
-	if (!searchPcb(&ready_queue, ssi_pcb) && ssi_pcb != current_process) {
+	if (!searchPcb(&ready_queue, ssi_pcb) && ssi_pcb != current_process &&
+	    is_waiting_for_me((pcb_t *)INTERRUPT_HANDLER_MSG, ssi_pcb)) {
 		insertProcQ(&ready_queue, ssi_pcb);
 		deliver_message(&ssi_pcb->p_s, msg);
 	} else {
