@@ -22,7 +22,6 @@ typedef union interrupt_handler_io_msg {
 } interrupt_handler_io_msg_t;
 
 void ssi();
-int should_pcb_be_soft_blocked(pcb_t *p);
-int was_pcb_soft_blocked(pcb_t *p);
+int is_a_softblocking_request(ssi_payload_t *p);
 
 #endif

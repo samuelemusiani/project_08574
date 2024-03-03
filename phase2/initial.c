@@ -11,6 +11,9 @@ unsigned int process_count;
 // The number of processes that are blocked
 unsigned int softblock_count;
 
+// Store the tod_timer
+cpu_t tod_timer;
+
 // Tail pointer to a queue of PCBs that are in the “ready” state.
 struct list_head ready_queue; // Tail pointer ?
 

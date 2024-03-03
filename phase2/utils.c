@@ -7,36 +7,27 @@ void terminate_process(pcb_t *p)
 {
 	outChild(p);
 
-	int was_waiting = 0;
-
-	// If waiting for IO we should remove him for the queue
-	for (int i = 0; i < MAXDEVICE; i++) {
-		// TODO: Optimize, I can wait only on one device
-		if (outProcQ(&pcb_blocked_on_device[i], p) == p)
-			was_waiting = 1;
-	}
-
-	// If waiting for clock we should remove him for the queue
-	if (outProcQ(&pcb_blocked_on_clock, p) == p)
-		was_waiting = 1;
-
 	process_count--;
-	softblock_count -= was_waiting;
+	// There is a small case in which the process have do_io set to 1 but is not
+	// waiting yet (between a SEND and a RECEIVE). Because is not waiting, the
+	// softblock_count is not really incremented. We should check if this process
+	// has olready entered the blocked state.
+	softblock_count -= p->do_io;
 
 	// We should terminate all his progenesis
 	while (!emptyChild(p)) {
-		terminate_process(headProcQ(&p->p_child));
+		terminate_process(container_of(p->p_child.next, pcb_t, p_sib));
 	}
 
 	freePcb(p);
 }
 
-int proc_was_in_kernel_mode(pcb_t *p)
+int proc_was_in_kernel_mode(state_t *p)
 {
-	return p->p_s.status & MSTATUS_MIE_MASK;
+	return p->status & MSTATUS_MPP_M;
 }
 
-int proc_was_in_user_mode(pcb_t *p)
+int proc_was_in_user_mode(state_t *p)
 {
 	return !proc_was_in_kernel_mode(p);
 }
@@ -52,10 +43,10 @@ void *memcpy(void *dest, const void *src, unsigned int len)
 }
 
 // type = {0..4}
-// number = {0..6}
+// number = {0..7}
 int hash_from_device_type_number(int type, int number)
 {
-	return type + number * N_DEV_PER_IL;
+	return type * N_DEV_PER_IL + number;
 }
 
 // This functions maps a memaddr to a number in [0,40] in order to map the
@@ -67,5 +58,14 @@ int comm_add_to_number(memaddr command_addr)
 	int interrupt_line_number = tmp / 8; // Start from zero
 	int dev_number = tmp - interrupt_line_number * N_DEV_PER_IL;
 
-	return hash_from_device_type_number(dev_number, interrupt_line_number);
+	return hash_from_device_type_number(interrupt_line_number, dev_number);
+}
+
+void update_cpu_time()
+{
+	cpu_t current_TOD;
+	STCK(current_TOD);
+	if (current_process != NULL) {
+		current_process->p_time += current_TOD - tod_timer;
+	}
 }

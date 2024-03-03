@@ -27,16 +27,17 @@ void interrupt_handler()
 		it_interrupt_handler();
 	else if (mip & 1 << IL_CPUTIMER)
 		plt_interrupt_handler();
-	else if (mip & 1 << 11) {
-		char iln = DEV_IL_START;
-		char max_il = DEV_IL_START + N_EXT_IL;
-		while (iln < max_il && !(mip & 1 << iln))
+	else {
+		int iln = DEV_IL_START;
+		int max_il = DEV_IL_START + N_EXT_IL;
+		while (iln < max_il && !(mip & 1 << iln)) {
 			iln++;
+		}
+
 		if (iln == max_il)
 			PANIC();
 		device_interrupt_handler(iln);
-	} else
-		PANIC();
+	}
 }
 
 static void device_interrupt_handler(unsigned int iln)
@@ -46,15 +47,19 @@ static void device_interrupt_handler(unsigned int iln)
 	 * 8 bit, each bit represents a device.
 	 * We need the device with the lower number that has 1 on the bit corresponding to it.
 	*/
-	char bitmap = *(char *)CDEV_BITMAP_ADDR(iln);
-	char dev_n = 0;
-	while (dev_n < N_DEV_PER_IL && !(bitmap & 1 << dev_n)) {
+	int bitmap = *(char *)CDEV_BITMAP_ADDR(iln);
+	int dev_n = 0;
+	int tmp1 = bitmap & (1 << dev_n);
+	int cond = !tmp1;
+	while (dev_n < N_DEV_PER_IL && cond) {
 		dev_n++;
+		tmp1 = bitmap & (1 << dev_n);
+		cond = !tmp1;
 	}
 	if (dev_n == N_DEV_PER_IL)
 		PANIC();
 
-	devreg_t *devAddrBase = (devreg_t *)DEV_REG_ADDR(iln, 1 << dev_n);
+	devreg_t *devAddrBase = (devreg_t *)DEV_REG_ADDR(iln, dev_n);
 	char statusCode;
 	if (iln == IL_TERMINAL) {
 		/*
@@ -89,7 +94,10 @@ static void device_interrupt_handler(unsigned int iln)
 					   .fields.device_number = dev_n,
 					   .fields.status = statusCode };
 	send_message_to_ssi(msg.payload);
-	LDST((state_t *)BIOSDATAPAGE);
+	if (current_process == NULL)
+		scheduler();
+	else
+		LDST((state_t *)BIOSDATAPAGE);
 }
 
 static void plt_interrupt_handler()
@@ -105,5 +113,8 @@ static void it_interrupt_handler()
 	LDIT(PSECOND);
 	interrupt_handler_io_msg_t msg = { .fields.service = 1 };
 	send_message_to_ssi(msg.payload);
-	LDST((state_t *)BIOSDATAPAGE);
+	if (current_process == NULL)
+		scheduler();
+	else
+		LDST((state_t *)BIOSDATAPAGE);
 }
