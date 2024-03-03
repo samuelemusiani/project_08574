@@ -183,6 +183,7 @@ static void pass_up_or_die(int excp_value)
 {
 	if (current_process->p_supportStruct == NULL) {
 		terminate_process(current_process);
+		scheduler();
 	} else {
 		current_process->p_supportStruct->sup_exceptState[excp_value] =
 			*((state_t *)BIOSDATAPAGE);
