@@ -16,7 +16,7 @@ void terminate_process(pcb_t *p)
 
 	// We should terminate all his progenesis
 	while (!emptyChild(p)) {
-		terminate_process(headProcQ(&p->p_child));
+		terminate_process(container_of(p->p_child.next, pcb_t, p_sib));
 	}
 
 	freePcb(p);
