@@ -1,4 +1,5 @@
 #include "./headers/pcb.h"
+#include <uriscv/liburiscv.h>
 
 pcb_t pcbTable[MAXPROC]; /* PCB array with maximum size 'MAXPROC' */
 LIST_HEAD(pcbFree_h); /* List of free PCBs                     */
@@ -7,7 +8,10 @@ static int next_pid = 1;
 // insert the element pointed to by p onto the pcbFree list.
 void freePcb(pcb_t *p)
 {
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
 	list_add(&p->p_list, &pcbFree_h);
+	setSTATUS(status);
 }
 
 // Return NULL if the pcbFree list is empty. Otherwise, remove an element from
@@ -17,9 +21,12 @@ void freePcb(pcb_t *p)
 // gets reallocated
 pcb_t *allocPcb()
 {
-	if (list_empty(&pcbFree_h))
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
+	if (list_empty(&pcbFree_h)) {
+		setSTATUS(status);
 		return NULL;
-
+	}
 	pcb_t *p = container_of(pcbFree_h.next, pcb_t, p_list);
 	list_del(&p->p_list);
 
@@ -46,7 +53,7 @@ pcb_t *allocPcb()
 	next_pid++;
 
 	p->do_io = 0;
-
+	setSTATUS(status);
 	return p;
 }
 
@@ -55,29 +62,42 @@ pcb_t *allocPcb()
 // initialization.
 void initPcbs()
 {
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
 	for (int i = 0; i < MAXPROC; i++)
 		list_add(&pcbTable[i].p_list, &pcbFree_h);
+	setSTATUS(status);
 }
 
 // this method is used to initialize a variable to be head pointer to a process
 // queue.
 void mkEmptyProcQ(struct list_head *head)
 {
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
 	INIT_LIST_HEAD(head);
+	setSTATUS(status);
 }
 
 // Return TRUE if the queue whose head is pointed to by head is empty. Return
 // FALSE otherwise.
 int emptyProcQ(struct list_head *head)
 {
-	return list_empty(head);
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
+	int a = list_empty(head);
+	setSTATUS(status);
+	return a;
 }
 
 // Insert the PCB pointed by p into the process queue whose head pointer is
 // pointed to by head.
 void insertProcQ(struct list_head *head, pcb_t *p)
 {
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
 	list_add_tail(&p->p_list, head);
+	setSTATUS(status);
 }
 
 // Return a pointer to the first PCB from the process queue whose head is
@@ -85,10 +105,15 @@ void insertProcQ(struct list_head *head, pcb_t *p)
 // NULL if the process queue is empty.
 pcb_t *headProcQ(struct list_head *head)
 {
-	if (list_empty(head))
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
+	if (list_empty(head)) {
+		setSTATUS(status);
 		return NULL;
-
-	return container_of(list_next(head), pcb_t, p_list);
+	}
+	pcb_t *a = container_of(list_next(head), pcb_t, p_list);
+	setSTATUS(status);
+	return a;
 }
 
 // Remove the first (i.e. head) element from the process queue whose head
@@ -96,11 +121,16 @@ pcb_t *headProcQ(struct list_head *head)
 // initially empty; otherwise return the pointer to the removed element.
 pcb_t *removeProcQ(struct list_head *head)
 {
-	if (list_empty(head))
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
+	if (list_empty(head)) {
+		setSTATUS(status);
 		return NULL;
+	}
 
 	pcb_t *tmp = headProcQ(head);
 	list_del(&tmp->p_list);
+	setSTATUS(status);
 	return tmp;
 }
 
@@ -110,32 +140,42 @@ pcb_t *removeProcQ(struct list_head *head)
 // any element of the process queue.
 pcb_t *outProcQ(struct list_head *head, pcb_t *p)
 {
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
 	struct list_head *iter;
+	pcb_t *a = NULL;
 	list_for_each(iter, head)
 	{
 		pcb_t *tmp = container_of(iter, pcb_t, p_list);
 		if (tmp == p) {
 			list_del(&tmp->p_list);
-			return tmp;
+			a = tmp;
 		}
 	}
-
-	return NULL;
+	setSTATUS(status);
+	return a;
 }
 
 // return TRUE if the PCB pointed to by p has no children. Return FALSE
 // otherwise.
 int emptyChild(pcb_t *p)
 {
-	return list_empty(&p->p_child);
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
+	unsigned int a = list_empty(&p->p_child);
+	setSTATUS(status);
+	return a;
 }
 
 // make the PCB pointed to by p a child of the PCB pointed to by prnt.
 void insertChild(pcb_t *prnt, pcb_t *p)
 {
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
 	p->p_parent = prnt;
 
 	list_add_tail(&p->p_sib, &prnt->p_child);
+	setSTATUS(status);
 }
 
 // make the first child of the PCB pointed to by p no longer a child of p.
@@ -143,7 +183,11 @@ void insertChild(pcb_t *prnt, pcb_t *p)
 // pointer to this removed first child PCB.
 pcb_t *removeChild(pcb_t *p)
 {
-	return removeProcQ(&p->p_child);
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
+	pcb_t *a = removeProcQ(&p->p_child);
+	setSTATUS(status);
+	return a;
 }
 
 // make the PCB pointed to by p no longer the child of its parent. If the PCB
@@ -152,23 +196,32 @@ pcb_t *removeChild(pcb_t *p)
 // the first child of its parent).
 pcb_t *outChild(pcb_t *p)
 {
-	if (p->p_parent == NULL)
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
+	if (p->p_parent == NULL) {
+		setSTATUS(status);
 		return NULL;
+	}
 
 	list_del(&p->p_sib);
+	setSTATUS(status);
 	return p;
 }
 
 //Return 1 if the pcb pointed by p is in the list whose head is pointed to by head. Return 0 otherwise
 int searchPcb(struct list_head *head, pcb_t *p)
 {
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
 	struct list_head *iter;
+	unsigned int a = 0;
 	list_for_each(iter, head)
 	{
 		pcb_t *tmp = container_of(iter, pcb_t, p_list);
 		if (tmp == p) {
-			return 1;
+			a = 1;
 		}
 	}
-	return 0;
+	setSTATUS(status);
+	return a;
 }
