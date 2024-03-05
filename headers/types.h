@@ -58,10 +58,13 @@ typedef struct pcb_t
 
     /* Pointer to the support struct */
     support_t *p_supportStruct;
+    
+    /* IO, clock list */
+    struct list_head p_io;
+    int do_io; // This is mantained for legacy. // TODO remove :)
 
     /* process id */
     int p_pid;
-    int do_io;
 } pcb_t, *pcb_PTR;
 
 /* message entry type */

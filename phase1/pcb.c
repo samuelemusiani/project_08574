@@ -53,6 +53,7 @@ pcb_t *allocPcb()
 	next_pid++;
 
 	p->do_io = 0;
+	INIT_LIST_HEAD(&p->p_io);
 	setSTATUS(status);
 	return p;
 }
@@ -100,6 +101,14 @@ void insertProcQ(struct list_head *head, pcb_t *p)
 	setSTATUS(status);
 }
 
+void insertProcQForIO(struct list_head *head, pcb_t *p)
+{
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
+	list_add_tail(&p->p_io, head);
+	setSTATUS(status);
+}
+
 // Return a pointer to the first PCB from the process queue whose head is
 // pointed to by head. Do not remove this PCB from the process queue. Return
 // NULL if the process queue is empty.
@@ -112,6 +121,19 @@ pcb_t *headProcQ(struct list_head *head)
 		return NULL;
 	}
 	pcb_t *a = container_of(list_next(head), pcb_t, p_list);
+	setSTATUS(status);
+	return a;
+}
+
+pcb_t *headProcQForIO(struct list_head *head)
+{
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
+	if (list_empty(head)) {
+		setSTATUS(status);
+		return NULL;
+	}
+	pcb_t *a = container_of(list_next(head), pcb_t, p_io);
 	setSTATUS(status);
 	return a;
 }
@@ -130,6 +152,23 @@ pcb_t *removeProcQ(struct list_head *head)
 
 	pcb_t *tmp = headProcQ(head);
 	list_del(&tmp->p_list);
+	INIT_LIST_HEAD(&tmp->p_list);
+	setSTATUS(status);
+	return tmp;
+}
+
+pcb_t *removeProcQForIO(struct list_head *head)
+{
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
+	if (list_empty(head)) {
+		setSTATUS(status);
+		return NULL;
+	}
+
+	pcb_t *tmp = headProcQForIO(head);
+	list_del(&tmp->p_io);
+	INIT_LIST_HEAD(&tmp->p_io);
 	setSTATUS(status);
 	return tmp;
 }
