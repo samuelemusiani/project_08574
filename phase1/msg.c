@@ -22,8 +22,10 @@ msg_t *allocMsg()
 {
 	unsigned int status = getSTATUS();
 	setSTATUS(status & ~(1 << 3));
-	if (list_empty(&msgFree_h))
+	if (list_empty(&msgFree_h)) {
+		setSTATUS(status);
 		return NULL;
+	}
 
 	msg_t *tmp = container_of(msgFree_h.next, msg_t, m_list);
 	list_del(&tmp->m_list);
