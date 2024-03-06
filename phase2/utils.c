@@ -7,8 +7,10 @@ void terminate_process(pcb_t *p)
 {
 	if (p == ssi_pcb)
 		PANIC();
+
 	outChild(p);
 	outProcQ(&ready_queue, p);
+	outProcQForIO(&ready_queue, p);
 
 	process_count--;
 	// There is a small case in which the process have do_io set to 1 but is not

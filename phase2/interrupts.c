@@ -5,12 +5,6 @@
 #include "headers/ssi.h"
 #include <uriscv/arch.h>
 
-/* QUESTIONS:
- * 1. What if the PCB waiting for the device's interrupt was terminated?
- * 2. How do I handle multiple interrupt lines?
- *    Do I have to recall the interrupt_handler myself?
-*/
-
 static void plt_interrupt_handler();
 static void it_interrupt_handler();
 static void device_interrupt_handler(unsigned int iln);
@@ -18,9 +12,9 @@ static void device_interrupt_handler(unsigned int iln);
 void interrupt_handler()
 {
 	/*
-	 * We can only handle one interrupt at a time, the one with the highest priority;
-	 * the interrupt with the highest priority is the lowest device number
-	 * with the lowest interrupt line number.
+	 * We can only handle one interrupt at a time, the one with the highest 
+   * priority; the interrupt with the highest priority is the lowest device 
+   * number with the lowest interrupt line number.
 	*/
 	unsigned int mip = getMIP();
 	unsigned int interr = 1 << IL_TIMER | 1 << IL_CPUTIMER |
@@ -54,9 +48,9 @@ void interrupt_handler()
 static void device_interrupt_handler(unsigned int iln)
 {
 	/*
-	 * CDEV_BITMAP_ADDR(IntlineNo) is the address of the interrupting devices bitmap.
-	 * 8 bit, each bit represents a device.
-	 * We need the device with the lower number that has 1 on the bit corresponding to it.
+	 * CDEV_BITMAP_ADDR(IntlineNo) is the address of the interrupting devices 
+   * bitmap. 8 bit, each bit represents a device. We need the device with the 
+   * lower number that has 1 on the bit corresponding to it.
 	*/
 	int bitmap = *(char *)CDEV_BITMAP_ADDR(iln);
 	int dev_n = 0;
@@ -94,11 +88,9 @@ static void device_interrupt_handler(unsigned int iln)
 		statusCode = devAddrBase->dtp.status;
 		devAddrBase->dtp.command = ACK;
 	}
-	/*
-	 * Send a message to the ssi with the status code; it will be its job
-	 * to unblock the process, set the status code in the process' a0 register
-	 * and insert it in the ready queue.
-	*/
+
+	// Send a message to the ssi with the status code; it will be its job
+	// to unblock the process
 	interrupt_handler_io_msg_t msg = { .fields.service = 0,
 					   .fields.device_type =
 						   EXT_IL_INDEX(iln),

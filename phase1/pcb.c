@@ -195,6 +195,24 @@ pcb_t *outProcQ(struct list_head *head, pcb_t *p)
 	return a;
 }
 
+pcb_t *outProcQForIO(struct list_head *head, pcb_t *p)
+{
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
+	struct list_head *iter;
+	pcb_t *a = NULL;
+	list_for_each(iter, head)
+	{
+		pcb_t *tmp = container_of(iter, pcb_t, p_io);
+		if (tmp == p) {
+			list_del(&tmp->p_list);
+			a = tmp;
+		}
+	}
+	setSTATUS(status);
+	return a;
+}
+
 // return TRUE if the PCB pointed to by p has no children. Return FALSE
 // otherwise.
 int emptyChild(pcb_t *p)
