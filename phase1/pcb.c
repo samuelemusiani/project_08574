@@ -264,3 +264,16 @@ int searchPcb(struct list_head *head, pcb_t *p)
 	setSTATUS(status);
 	return a;
 }
+
+int isPcbValid(pcb_t *p)
+{
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
+	int a = 1;
+	if (p < pcbTable || p > pcbTable + MAXPROC - 1 ||
+	    searchPcb(&pcbFree_h, p) ||
+	    ((int)p - (int)pcbTable) % sizeof(pcb_t) != 0)
+		a = 0;
+	setSTATUS(status);
+	return a;
+}
