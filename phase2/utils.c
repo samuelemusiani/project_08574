@@ -5,6 +5,8 @@
 
 void terminate_process(pcb_t *p)
 {
+	if (p == ssi_pcb)
+		PANIC();
 	outChild(p);
 	outProcQ(&ready_queue, p);
 
