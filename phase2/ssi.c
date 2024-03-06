@@ -14,8 +14,6 @@ static int get_process_id(pcb_t *sender, void *arg);
 static void answer_do_io(int device_type, int device_number, int status);
 static void answer_wait_for_clock();
 
-LIST_HEAD(pcb_blocked_after_io);
-
 void ssi()
 {
 	while (1) {
@@ -60,15 +58,13 @@ void ssi()
 			case TERMPROCESS: {
 				_terminate_process((pcb_t *)sender,
 						   (pcb_t *)payload->arg);
-				SYSCALL(SENDMESSAGE, sender, 0,
-					0); // ack ?? If sender is terminated?
+				SYSCALL(SENDMESSAGE, sender, 0, 0);
 				break;
 			}
 
 			case DOIO: {
 				do_io((pcb_t *)sender,
 				      (ssi_do_io_t *)payload->arg);
-				// ack is when interrupt_handler send me a message
 				break;
 			}
 
@@ -80,7 +76,6 @@ void ssi()
 
 			case CLOCKWAIT: {
 				wait_for_clock((pcb_t *)sender);
-				// ack is when interrupt_handler send me a message
 				break;
 			}
 
@@ -173,9 +168,9 @@ static int get_process_id(pcb_t *sender, void *arg)
 static void answer_do_io(int device_type, int device_number, int status)
 {
 	// If the interrupt handler sends me only the device type and
-	// is number (so the position in the pcb_blocked_on_device array
+	// his number (so the position in the pcb_blocked_on_device array),
 	// I can look up the pcb to send the message to and remove him from
-	// the list;
+	// the list
 	int tmp = hash_from_device_type_number(device_type, device_number);
 	pcb_t *dest = removeProcQForIO(&pcb_blocked_on_device[tmp]);
 	SYSCALL(SENDMESSAGE, (unsigned int)dest, status, 0);
