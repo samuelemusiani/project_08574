@@ -60,12 +60,10 @@ static void syscall_handler()
 
 		switch (((state_t *)BIOSDATAPAGE)->reg_a0) {
 		case SENDMESSAGE: {
-			if (dest < pcbTable || dest > pcbTable + MAXPROC - 1) {
-				((state_t *)BIOSDATAPAGE)->reg_a0 = MSGNOGOOD;
-			} else if (searchPcb(&pcbFree_h, dest)) {
+			if (!isPcbValid(dest))
 				((state_t *)BIOSDATAPAGE)->reg_a0 =
 					DEST_NOT_EXIST;
-			} else {
+			else {
 				msg_t *msg = allocMsg();
 				msg->m_payload = payload;
 				msg->m_sender = current_process;

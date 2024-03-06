@@ -5,9 +5,6 @@
 #include "../../headers/listx.h"
 #include "../../headers/types.h"
 
-extern struct list_head pcbFree_h;
-extern pcb_t pcbTable[MAXPROC];
-
 void initPcbs();
 void freePcb(pcb_t *p);
 pcb_t *allocPcb();
@@ -25,5 +22,6 @@ void insertChild(pcb_t *prnt, pcb_t *p);
 pcb_t *removeChild(pcb_t *p);
 pcb_t *outChild(pcb_t *p);
 int searchPcb(struct list_head *head, pcb_t *p);
+int isPcbValid(pcb_t *p);
 
 #endif
