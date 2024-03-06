@@ -137,10 +137,11 @@ static void _terminate_process(pcb_t *sender, pcb_t *p)
 
 static void do_io(pcb_t *sender, ssi_do_io_t *p)
 {
-	*(p->commandAddr) = p->commandValue;
 	int n = comm_add_to_number((unsigned int)p->commandAddr);
 	sender->do_io = 1;
-	insertProcQ(&pcb_blocked_on_device[n], sender);
+
+	insertProcQForIO(&pcb_blocked_on_device[n], sender);
+	*(p->commandAddr) = p->commandValue;
 }
 
 static cpu_t get_cpu_time(pcb_t *p)
@@ -150,7 +151,7 @@ static cpu_t get_cpu_time(pcb_t *p)
 
 static void wait_for_clock(pcb_t *p)
 {
-	insertProcQ(&pcb_blocked_on_clock, p);
+	insertProcQForIO(&pcb_blocked_on_clock, p);
 }
 
 static support_t *get_support_data(pcb_t *p)
@@ -176,14 +177,14 @@ static void answer_do_io(int device_type, int device_number, int status)
 	// I can look up the pcb to send the message to and remove him from
 	// the list;
 	int tmp = hash_from_device_type_number(device_type, device_number);
-	pcb_t *dest = removeProcQ(&pcb_blocked_on_device[tmp]);
+	pcb_t *dest = removeProcQForIO(&pcb_blocked_on_device[tmp]);
 	SYSCALL(SENDMESSAGE, (unsigned int)dest, status, 0);
 }
 
 static void answer_wait_for_clock()
 {
 	pcb_t *dest;
-	while ((dest = removeProcQ(&pcb_blocked_on_clock))) {
+	while ((dest = removeProcQForIO(&pcb_blocked_on_clock))) {
 		SYSCALL(SENDMESSAGE, (unsigned int)dest, 0, 0);
 	}
 }

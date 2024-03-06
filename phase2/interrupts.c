@@ -23,21 +23,32 @@ void interrupt_handler()
 	 * with the lowest interrupt line number.
 	*/
 	unsigned int mip = getMIP();
-	if (mip & 1 << IL_TIMER)
-		it_interrupt_handler();
-	else if (mip & 1 << IL_CPUTIMER)
-		plt_interrupt_handler();
-	else {
-		int iln = DEV_IL_START;
-		int max_il = DEV_IL_START + N_EXT_IL;
-		while (iln < max_il && !(mip & 1 << iln)) {
-			iln++;
-		}
+	unsigned int interr = 1 << IL_TIMER | 1 << IL_CPUTIMER |
+			      31 << DEV_IL_START;
+	while (mip & interr) {
+		if (mip & 1 << IL_TIMER) {
+			mip &= ~(1 << IL_TIMER);
+			it_interrupt_handler();
+		} else if (mip & 1 << IL_CPUTIMER) {
+			mip &= ~(1 << IL_CPUTIMER);
+			plt_interrupt_handler();
+		} else {
+			int iln = DEV_IL_START;
+			int max_il = DEV_IL_START + N_EXT_IL;
+			while (iln < max_il && !(mip & 1 << iln)) {
+				iln++;
+			}
 
-		if (iln == max_il)
-			PANIC();
-		device_interrupt_handler(iln);
+			if (iln == max_il)
+				PANIC();
+			mip &= ~(1 << iln);
+			device_interrupt_handler(iln);
+		}
 	}
+	if (current_process == NULL)
+		scheduler();
+	else
+		LDST((state_t *)BIOSDATAPAGE);
 }
 
 static void device_interrupt_handler(unsigned int iln)
@@ -94,10 +105,6 @@ static void device_interrupt_handler(unsigned int iln)
 					   .fields.device_number = dev_n,
 					   .fields.status = statusCode };
 	send_message_to_ssi(msg.payload);
-	if (current_process == NULL)
-		scheduler();
-	else
-		LDST((state_t *)BIOSDATAPAGE);
 }
 
 static void plt_interrupt_handler()
@@ -105,7 +112,6 @@ static void plt_interrupt_handler()
 	current_process->p_s = *(state_t *)BIOSDATAPAGE;
 	insertProcQ(&ready_queue, current_process);
 	current_process = NULL;
-	scheduler();
 }
 
 static void it_interrupt_handler()
@@ -113,8 +119,4 @@ static void it_interrupt_handler()
 	LDIT(PSECOND);
 	interrupt_handler_io_msg_t msg = { .fields.service = 1 };
 	send_message_to_ssi(msg.payload);
-	if (current_process == NULL)
-		scheduler();
-	else
-		LDST((state_t *)BIOSDATAPAGE);
 }
