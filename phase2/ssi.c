@@ -156,13 +156,12 @@ static support_t *get_support_data(pcb_t *p)
 
 static int get_process_id(pcb_t *sender, void *arg)
 {
-	if (arg == 0) {
+	if (arg == 0)
 		return sender->p_pid;
-	} else if (sender->p_parent == NULL) {
+	else if (sender->p_parent == NULL)
 		return 0;
-	} else {
+	else
 		return sender->p_parent->p_pid;
-	}
 }
 
 static void answer_do_io(int device_type, int device_number, int status)

@@ -8,7 +8,7 @@
 // The number of started, but not yet terminated processes
 unsigned int process_count;
 
-// The number of processes that are blocked
+// The number of processes that are blocked on an I/O request
 unsigned int softblock_count;
 
 // Store the tod_timer
@@ -63,10 +63,10 @@ int main(void)
 	ssi_pcb = allocPcb();
 	insertProcQ(&ready_queue, ssi_pcb);
 	process_count++;
-	// In particular this process needs to have interrupts enabled and kernel mode
+	// In particular, this process needs to have interrupts enabled and kernel mode
 	ssi_pcb->p_s.status = KERNELMODE | INTERRUPTS_ENBALED;
 	ssi_pcb->p_s.mie = MIE_ALL;
-	// the SP set to RAMTOP (i.e. use the last RAM frame for its stack)
+	// the SP set to RAMTOP (i.e., use the last RAM frame for its stack)
 	RAMTOP(ssi_pcb->p_s.reg_sp);
 	// PC set to the address of ssi() function.
 	ssi_pcb->p_s.pc_epc = (memaddr)ssi;
@@ -75,13 +75,13 @@ int main(void)
 	pcb_t *test_pcb = allocPcb();
 	insertProcQ(&ready_queue, test_pcb);
 	process_count++;
-	// This process needs to have interrupts enabled, kernel-mode on,
+	// This process needs to have interrupts enabled and kernel-mode on
 	test_pcb->p_s.status = INTERRUPTS_ENBALED | KERNELMODE;
 	test_pcb->p_s.mie = MIE_ALL;
 	// the SP set to RAMTOP - (2 * FRAMESIZE)
 	memaddr ramtop;
 	RAMTOP(ramtop);
-	unsigned int framesize = 0x00001000; // TODO: Find the real value
+	unsigned int framesize = 0x00001000;
 	test_pcb->p_s.reg_sp = ramtop - (2 * framesize);
 	// PC set to the address of test.
 	test_pcb->p_s.pc_epc = (memaddr)test;

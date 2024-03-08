@@ -17,6 +17,7 @@ void interrupt_handler()
    * number with the lowest interrupt line number.
 	*/
 	unsigned int mip = getMIP();
+	// if interr > 0, there is still at least one interrupt to handle
 	unsigned int interr = 1 << IL_TIMER | 1 << IL_CPUTIMER |
 			      31 << DEV_IL_START;
 	while (mip & interr) {
@@ -68,14 +69,12 @@ static void device_interrupt_handler(unsigned int iln)
 	char statusCode;
 	if (iln == IL_TERMINAL) {
 		/*
-     * For the duration of the operation the sub-device’s status is “Device Busy.”
-     * Upon completion of the operation an interrupt is raised and an appropriate
+     * For the duration of the operation, the sub-device’s status is “Device Busy.”
+     * Upon completion of the operation, an interrupt is raised and an appropriate
      * status code is set in TRANSM_STATUS or RECV_STATUS respectively;
      * “Character Transmitted/Received” for successful completion (code 5) or
      * one of the error codes (codes 0, 2, 4).
-     *
-     * ??? Is "device busy" an error code ???
-    */
+     */
 		char transm_status = devAddrBase->term.transm_status;
 		if (transm_status != 1 && transm_status != 3) {
 			statusCode = transm_status;

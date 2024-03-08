@@ -35,12 +35,11 @@ void exception_handler()
 		interrupt_handler();
 	} else {
 		unsigned int excCode = mcause & GETEXECCODE;
-		if ((excCode >= 0 && excCode <= 7) ||
-		    (excCode > 11 && excCode < 24)) {
+		if ((excCode <= 7) || (excCode > 11 && excCode < 24)) {
 			trap_handler();
-		} else if (excCode >= 8 && excCode <= 11) {
+		} else if (excCode <= 11) {
 			syscall_handler();
-		} else if (excCode >= 24 && excCode <= 28) {
+		} else if (excCode <= 28) {
 			tlb_handler();
 		} else {
 			PANIC(); // If we could not handle the exception, we panic
@@ -64,11 +63,9 @@ static void syscall_handler()
 			unsigned int payload =
 				((state_t *)BIOSDATAPAGE)->reg_a2;
 
-			unsigned int return_val;
+			unsigned int return_val = DEST_NOT_EXIST;
 
-			if (!isPcbValid(dest)) {
-				return_val = DEST_NOT_EXIST;
-			} else {
+			if (isPcbValid(dest)) {
 				return_val = send_message(dest, payload,
 							  current_process);
 			}
@@ -115,15 +112,14 @@ static void blockSys()
 	if (current_process->do_io)
 		softblock_count++;
 	current_process = NULL;
-	//Aggiorno il CPU time TODO
 	scheduler();
 }
 
 static void deliver_message(state_t *p, msg_t *msg)
 {
 	p->reg_a0 = (unsigned int)msg->m_sender;
-	memaddr *payload_destination = (memaddr *)p->reg_a2;
 	//save the payload in the address pointed by the reg_a2
+	memaddr *payload_destination = (memaddr *)p->reg_a2;
 	if (payload_destination) {
 		*payload_destination = (unsigned int)msg->m_payload;
 	}
@@ -147,8 +143,8 @@ static unsigned int send_message(pcb_t *dest, unsigned int payload,
 	msg->m_payload = payload;
 	msg->m_sender = sender;
 
-	// We nee to check if the sender is the interrupt_handler before the
-	// evaluation of is_a_softblocking_request because we can't dereference the
+	// We need to check if the sender is the interrupt_handler before the
+	// evaluation of is_a_softblocking_request() because we can't dereference the
 	// payload if sent by the interrupt_handler.
 	if (dest == ssi_pcb && sender != (pcb_t *)INTERRUPT_HANDLER_MSG &&
 	    is_a_softblocking_request((ssi_payload_t *)payload)) {
