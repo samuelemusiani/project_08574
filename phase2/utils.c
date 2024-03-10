@@ -3,6 +3,10 @@
 
 #include <uriscv/arch.h>
 
+/**
+ * This function terminates the specified process and all its progeny. It removes the process from the ready queue,
+ * updates the process count and soft block count, and frees the process control block (PCB) memory.
+ */
 void terminate_process(pcb_t *p)
 {
 	if (p == ssi_pcb_real)
@@ -72,6 +76,7 @@ int comm_add_to_number(memaddr command_addr)
 					    transm);
 }
 
+// This function is used to update the cpu time of the current process
 void update_cpu_time()
 {
 	cpu_t current_TOD;

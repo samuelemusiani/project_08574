@@ -124,6 +124,10 @@ static void syscall_handler()
 	}
 }
 
+/*
+ * This function blocks the current process, update its cpu_t
+ * and calls the scheduler to select the next process to dispatch
+ */
 static void blockSys()
 {
 	current_process->p_s = *((state_t *)BIOSDATAPAGE);
@@ -159,8 +163,6 @@ static int is_waiting_for_me(pcb_t *sender, pcb_t *dest)
 	return dest->p_s.reg_a1 == (unsigned int)sender ||
 	       dest->p_s.reg_a1 == ANYMESSAGE;
 }
-
-
 
 
 /**
