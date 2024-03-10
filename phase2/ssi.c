@@ -110,6 +110,8 @@ void ssi()
 	}
 }
 
+
+// Creates a new process (child of the sender process) and inserts it in the ready queue.
 pcb_t *create_process(pcb_t *sender, ssi_create_process_t *p)
 {
 	pcb_t *new_p = allocPcb();
@@ -126,6 +128,10 @@ pcb_t *create_process(pcb_t *sender, ssi_create_process_t *p)
 	return new_p;
 }
 
+/**
+ * Terminates the process specified by `p`.
+ * If `p` is NULL, the process specified by `sender` is terminated.
+ */
 static void _terminate_process(pcb_t *sender, pcb_t *p)
 {
 	// If p does not exist or is not a process?
@@ -144,16 +150,22 @@ static void do_io(pcb_t *sender, ssi_do_io_t *p)
 	*(p->commandAddr) = p->commandValue;
 }
 
+
+// Retrieves the CPU time of a given process.
 static cpu_t get_cpu_time(pcb_t *p)
 {
 	return p->p_time;
 }
 
+
+// Inserts the given process into the queue of processes blocked on the clock.
 static void wait_for_clock(pcb_t *p)
 {
 	insertProcQForIO(&pcb_blocked_on_clock, p);
 }
 
+
+// Return a pointer to the support data associated with a given process control block (PCB).
 static support_t *get_support_data(pcb_t *p)
 {
 	return p->p_supportStruct;
