@@ -11,8 +11,6 @@
 #include <uriscv/liburiscv.h>
 
 void terminate_process(pcb_t *p);
-int proc_was_in_kernel_mode(state_t *p);
-int proc_was_in_user_mode(state_t *p);
 int comm_add_to_number(memaddr command_addr);
 int hash_from_device_type_number(int type, int il);
 void update_cpu_time();

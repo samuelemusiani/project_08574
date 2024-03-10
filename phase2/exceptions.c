@@ -49,11 +49,10 @@ void exception_handler()
 
 static void syscall_handler()
 {
-	if (proc_was_in_user_mode((state_t *)BIOSDATAPAGE)) {
-		// Generate fake trap
-		int trap_cause = 29;
-		setCAUSE(trap_cause); //sys in usermode
-		((state_t *)BIOSDATAPAGE)->cause = trap_cause;
+	if ((getCAUSE() & GETEXECCODE) == 8) {
+		// On uMPS3 we should generate fake trap with a reserverd code of PRIVINSTR
+		// that has value 10. In uRISCV this is not needed as a paricular code is
+		// used for SYS in user mode (8).
 		trap_handler();
 	} else {
 		switch (((state_t *)BIOSDATAPAGE)->reg_a0) {
