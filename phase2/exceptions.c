@@ -15,6 +15,8 @@ static void tlb_handler();
 static void blockSys();
 static void deliver_message(state_t *p, msg_t *msg);
 static void pass_up_or_die(int excp_value);
+static unsigned int send_message(pcb_t *dest, unsigned int payload,
+				 pcb_t *sender);
 
 static int is_waiting_for_me(pcb_t *sender, pcb_t *dest);
 
@@ -33,15 +35,14 @@ void exception_handler()
 		interrupt_handler();
 	} else {
 		unsigned int excCode = mcause & GETEXECCODE;
-		if ((excCode >= 0 && excCode <= 7) ||
-		    (excCode > 11 && excCode < 24)) {
+		if ((excCode <= 7) || (excCode > 11 && excCode < 24)) {
 			trap_handler();
-		} else if (excCode >= 8 && excCode <= 11) {
+		} else if (excCode <= 11) {
 			syscall_handler();
-		} else if (excCode >= 24 && excCode <= 28) {
+		} else if (excCode <= 28) {
 			tlb_handler();
 		} else {
-			PANIC(); // Lo facciamo ??
+			PANIC(); // If we could not handle the exception, we panic
 		}
 	}
 }
@@ -55,46 +56,25 @@ static void syscall_handler()
 		((state_t *)BIOSDATAPAGE)->cause = trap_cause;
 		trap_handler();
 	} else {
-		pcb_t *dest = (pcb_t *)((state_t *)BIOSDATAPAGE)->reg_a1;
-		unsigned int payload = ((state_t *)BIOSDATAPAGE)->reg_a2;
-
 		switch (((state_t *)BIOSDATAPAGE)->reg_a0) {
 		case SENDMESSAGE: {
-			if (!isPcbValid(dest))
-				((state_t *)BIOSDATAPAGE)->reg_a0 =
-					DEST_NOT_EXIST;
-			else {
-				msg_t *msg = allocMsg();
-				msg->m_payload = payload;
-				msg->m_sender = current_process;
+			pcb_t *dest =
+				(pcb_t *)((state_t *)BIOSDATAPAGE)->reg_a1;
+			unsigned int payload =
+				((state_t *)BIOSDATAPAGE)->reg_a2;
 
-				if (dest == ssi_pcb &&
-				    is_a_softblocking_request(
-					    (ssi_payload_t *)payload)) {
-					current_process->do_io = 1;
-				}
+			unsigned int return_val = DEST_NOT_EXIST;
 
-				if (!searchPcb(&ready_queue, dest) &&
-				    dest != current_process &&
-				    is_waiting_for_me(current_process, dest)) {
-					// if dest is not in the ready queue,
-					// it means that it is blocked on a receive message
-					insertProcQ(&ready_queue,
-						    ((pcb_t *)dest));
-
-					if (dest->do_io) {
-						dest->do_io = 0;
-						softblock_count--;
-					}
-
-					deliver_message(&dest->p_s, msg);
-
-				} else {
-					insertMessage(&dest->msg_inbox, msg);
-				}
-				((state_t *)BIOSDATAPAGE)->reg_a0 = 0;
+			if (isPcbValid(dest)) {
+				return_val = send_message(dest, payload,
+							  current_process);
 			}
+			// Set return value
+			((state_t *)BIOSDATAPAGE)->reg_a0 = return_val;
+
+			// Increment PC to avoid sys loop
 			((state_t *)BIOSDATAPAGE)->pc_epc += 4;
+
 			LDST(((state_t *)BIOSDATAPAGE));
 
 			break;
@@ -105,14 +85,15 @@ static void syscall_handler()
 			msg_t *msg = popMessage(&current_process->msg_inbox,
 						((pcb_t *)sender));
 
-			if (msg) { //found message from sender
+			if (msg) { // Found message from sender
 				if (current_process->do_io) {
 					current_process->do_io = 0;
 				}
 				deliver_message((state_t *)BIOSDATAPAGE, msg);
 				LDST(((state_t *)BIOSDATAPAGE));
-			} else { //no message found
-				//the scheduler will be called and all following code will not be executed
+			} else {
+				// The scheduler will be called and all following code will not
+				// be executed
 				blockSys();
 			}
 			break;
@@ -131,15 +112,14 @@ static void blockSys()
 	if (current_process->do_io)
 		softblock_count++;
 	current_process = NULL;
-	//Aggiorno il CPU time TODO
 	scheduler();
 }
 
 static void deliver_message(state_t *p, msg_t *msg)
 {
 	p->reg_a0 = (unsigned int)msg->m_sender;
-	memaddr *payload_destination = (memaddr *)p->reg_a2;
 	//save the payload in the address pointed by the reg_a2
+	memaddr *payload_destination = (memaddr *)p->reg_a2;
 	if (payload_destination) {
 		*payload_destination = (unsigned int)msg->m_payload;
 	}
@@ -153,18 +133,48 @@ static int is_waiting_for_me(pcb_t *sender, pcb_t *dest)
 	       dest->p_s.reg_a1 == ANYMESSAGE;
 }
 
-void send_message_to_ssi(unsigned int payload)
+static unsigned int send_message(pcb_t *dest, unsigned int payload,
+				 pcb_t *sender)
 {
 	msg_t *msg = allocMsg();
+	if (!msg)
+		return MSGNOGOOD;
+
 	msg->m_payload = payload;
-	msg->m_sender = (pcb_t *)INTERRUPT_HANDLER_MSG;
-	if (!searchPcb(&ready_queue, ssi_pcb) && ssi_pcb != current_process &&
-	    is_waiting_for_me((pcb_t *)INTERRUPT_HANDLER_MSG, ssi_pcb)) {
-		insertProcQ(&ready_queue, ssi_pcb);
-		deliver_message(&ssi_pcb->p_s, msg);
-	} else {
-		insertMessage(&ssi_pcb->msg_inbox, msg);
+	msg->m_sender = sender;
+
+	// We need to check if the sender is the interrupt_handler before the
+	// evaluation of is_a_softblocking_request() because we can't dereference the
+	// payload if sent by the interrupt_handler.
+	if (dest == ssi_pcb && sender != (pcb_t *)INTERRUPT_HANDLER_MSG &&
+	    is_a_softblocking_request((ssi_payload_t *)payload)) {
+		current_process->do_io = 1;
 	}
+
+	if (!searchPcb(&ready_queue, dest) && dest != current_process &&
+	    is_waiting_for_me(sender, dest)) {
+		// if dest is not in the ready queue,
+		// it means that it is blocked on a receive message
+		insertProcQ(&ready_queue, ((pcb_t *)dest));
+
+		if (dest->do_io) {
+			dest->do_io = 0;
+			softblock_count--;
+		}
+
+		deliver_message(&dest->p_s, msg);
+
+	} else {
+		insertMessage(&dest->msg_inbox, msg);
+	}
+
+	// Set return value for sys SENDMSG
+	return 0;
+}
+
+void send_message_to_ssi(unsigned int payload)
+{
+	send_message(ssi_pcb, payload, (pcb_t *)INTERRUPT_HANDLER_MSG);
 }
 
 static void trap_handler()
