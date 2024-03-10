@@ -28,6 +28,11 @@ void uTLB_RefillHandler()
 	LDST((state_t *)0x0FFFF000);
 }
 
+/**
+ * This function handles exceptions that occur during program execution.
+ * It determines the type of exception based on the value of the .Excode
+ * in the cause register and calls the appropriate handler function.
+ */
 void exception_handler()
 {
 	unsigned int mcause = getCAUSE();
@@ -48,6 +53,15 @@ void exception_handler()
 	}
 }
 
+
+/**
+ * This function handles system calls
+ * It determines the type of syscall based on the value of reg_a0 (-1 = SENDMESSAGE, -2 = RECEIVEMESSAGE)
+ * In case of SENDMESSAGE, it save a pointer to the dest PCB from the reg_a1 and the payload from the reg_a2
+ * It then checks if the dest PCB is valid and calls send_message because it is an asynchronous operation
+ * In case of RECEIVEMESSAGE, it save a pointer to the sender PCB from the reg_a1 and check if there is a message in the inbox
+ * If there is a message, it calls deliver_message, otherwise it blocks the process because it's a synchronous operation
+ */
 static void syscall_handler()
 {
 	if ((getCAUSE() & GETEXECCODE) == 8) {
@@ -145,6 +159,18 @@ static int is_waiting_for_me(pcb_t *sender, pcb_t *dest)
 	return dest->p_s.reg_a1 == (unsigned int)sender ||
 	       dest->p_s.reg_a1 == ANYMESSAGE;
 }
+
+
+
+
+/**
+ * This function sends a message to the specified destination process.
+ *
+ * If the destination process is not in the ready queue and is blocked waiting for a message from the sender,
+ * the function inserts the destination process into the ready queue, updates the do_io flag if necessary, and delivers
+ * the message to the destination process. Otherwise, it inserts the message into the destination
+ * process's message inbox.
+ */
 
 static unsigned int send_message(pcb_t *dest, unsigned int payload,
 				 pcb_t *sender)
