@@ -9,6 +9,10 @@ static void plt_interrupt_handler();
 static void it_interrupt_handler();
 static void device_interrupt_handler(unsigned int iln);
 
+/**
+ * Handles interrupts by checking the interrupt priority and 
+ * calling the corresponding interrupt handler functions.
+ */
 void interrupt_handler()
 {
 	/*

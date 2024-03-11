@@ -53,7 +53,6 @@ void exception_handler()
 	}
 }
 
-
 /**
  * This function handles system calls
  * It determines the type of syscall based on the value of reg_a0 (-1 = SENDMESSAGE, -2 = RECEIVEMESSAGE)
@@ -163,7 +162,6 @@ static int is_waiting_for_me(pcb_t *sender, pcb_t *dest)
 	return dest->p_s.reg_a1 == (unsigned int)sender ||
 	       dest->p_s.reg_a1 == ANYMESSAGE;
 }
-
 
 /**
  * This function sends a message to the specified destination process.
