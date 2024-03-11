@@ -12,21 +12,20 @@ static void device_interrupt_handler(unsigned int iln);
 /**
  * Handles interrupts by checking the interrupt priority and 
  * calling the corresponding interrupt handler functions.
+ * We can only handle one interrupt at a time, the one with the highest 
+ * priority; the interrupt with the highest priority is the lowest device 
+ * number with the lowest interrupt line number.
  */
 void interrupt_handler()
 {
-	/*
-	 * We can only handle one interrupt at a time, the one with the highest 
-     * priority; the interrupt with the highest priority is the lowest device 
-     * number with the lowest interrupt line number.
-	*/
 	// MIP register contains the pending interrupts
 	// Three types of interrupts: timer, cpu timer, and devices
-	unsigned int mip = getMIP();
+	unsigned int mip = getMIP(); 
 	// if interr > 0, there is still at least one interrupt to handle
 	unsigned int interr = 1 << IL_TIMER | 1 << IL_CPUTIMER |
-			      31 << DEV_IL_START;
-	while (mip & interr) {
+			      31 << DEV_IL_START; // 5 types of device from 17 to 21
+				  // interr has 0 in all bits except in the 3rd, 7th, 17-21th bits
+	while (mip & interr) { // while there is at least one interrupt to handle
 		if (mip & 1 << IL_TIMER) {
 			mip &= ~(1 << IL_TIMER);
 			it_interrupt_handler();
@@ -46,10 +45,13 @@ void interrupt_handler()
 			device_interrupt_handler(iln);
 		}
 	}
-	if (current_process == NULL)
+	// If the CPU was in WAIT state before the interrupt occured
+	if (current_process == NULL) 
 		scheduler();
+	// If there was a process running before the interrupt occured
 	else
-		LDST((state_t *)BIOSDATAPAGE);
+		// Load the state of the process
+		LDST((state_t *)BIOSDATAPAGE); 
 }
 
 static void device_interrupt_handler(unsigned int iln)
