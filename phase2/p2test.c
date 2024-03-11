@@ -722,10 +722,11 @@ void p5mm()
 	// turn off kernel mode
 	pFiveSupport.sup_exceptState[PGFAULTEXCEPT].status &= (~MSTATUS_MPP_M);
 	// pFiveSupport.sup_exceptState[PGFAULTEXCEPT].status &= (~0x800);
-	pFiveSupport.sup_exceptState[PGFAULTEXCEPT].pc_epc = (memaddr)p5b; /* return
-									      to
-									      p5b()
-									    */
+	pFiveSupport.sup_exceptState[PGFAULTEXCEPT].pc_epc =
+		(memaddr)p5b; /* return
+				 to
+				 p5b()
+			       */
 
 	LDST(&(pFiveSupport.sup_exceptState[PGFAULTEXCEPT]));
 }
