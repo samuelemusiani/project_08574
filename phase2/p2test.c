@@ -245,9 +245,8 @@ void test()
 	p4state.mie = MIE_ALL;
 
 	STST(&p5state);
-	p5Stack = p5state.reg_sp = p4state.reg_sp - (2 * QPAGE); /* because
-								    there will 2
-								    p4 running*/
+	/* because there will 2 p4 running */
+	p5Stack = p5state.reg_sp = p4state.reg_sp - (2 * QPAGE);
 	p5state.pc_epc = (memaddr)p5;
 	p5state.status |= MSTATUS_MIE_MASK | MSTATUS_MPP_M;
 	p5state.mie = MIE_ALL;
@@ -332,9 +331,8 @@ void test()
 	if (p2pid != 4)
 		print_term0("ERROR: wrong p2 pid\n");
 
-	SYSCALL(SENDMESSAGE, (unsigned int)p2_pcb, START, 0); /* start p2 */
-	SYSCALL(RECEIVEMESSAGE, (unsigned int)p2_pcb, 0, 0);  /* wait p2 to end
-							       */
+	SYSCALL(SENDMESSAGE, (unsigned int)p2_pcb, START, 0); // start p2
+	SYSCALL(RECEIVEMESSAGE, (unsigned int)p2_pcb, 0, 0);  // wait p2 to end
 
 	/* check p2 sync */
 	if (p1p2sync == 0)
@@ -346,9 +344,8 @@ void test()
 	p3_pcb = create_process(&p3state);
 	p3pid = p3_pcb->p_pid;
 
-	SYSCALL(SENDMESSAGE, (unsigned int)p3_pcb, START, 0); /* start p3 */
-	SYSCALL(RECEIVEMESSAGE, (unsigned int)p3_pcb, 0, 0);  /* wait p3 to end
-							       */
+	SYSCALL(SENDMESSAGE, (unsigned int)p3_pcb, START, 0); // start p3
+	SYSCALL(RECEIVEMESSAGE, (unsigned int)p3_pcb, 0, 0);  // wait p3 to end
 
 	print_term0("p1 knows p3 ended\n");
 
@@ -723,10 +720,7 @@ void p5mm()
 	pFiveSupport.sup_exceptState[PGFAULTEXCEPT].status &= (~MSTATUS_MPP_M);
 	// pFiveSupport.sup_exceptState[PGFAULTEXCEPT].status &= (~0x800);
 	pFiveSupport.sup_exceptState[PGFAULTEXCEPT].pc_epc =
-		(memaddr)p5b; /* return
-				 to
-				 p5b()
-			       */
+		(memaddr)p5b; // return to p5b()
 
 	LDST(&(pFiveSupport.sup_exceptState[PGFAULTEXCEPT]));
 }
@@ -750,8 +744,8 @@ void p5sys()
 	default:
 		print_term0("ERROR: p5sys cannot recognise the status\n");
 	}
-	pFiveSupport.sup_exceptState[GENERALEXCEPT].pc_epc += 4; /* to avoid SYS
-								    looping */
+	/* to avoid SYS looping */
+	pFiveSupport.sup_exceptState[GENERALEXCEPT].pc_epc += 4;
 
 	LDST(&(pFiveSupport.sup_exceptState[GENERALEXCEPT]));
 }
@@ -795,8 +789,8 @@ void p6()
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)test_pcb, 0, 0);
 	print_term0("p6 starts\n");
 
-	SYSCALL(1, 0, 0, 0); /* should cause termination because p6 has no trap
-				vector */
+	/* should cause termination because p6 has no trap vector */
+	SYSCALL(1, 0, 0, 0);
 
 	print_term0("ERROR: p6 alive after SYS9() with no trap vector\n");
 	PANIC();

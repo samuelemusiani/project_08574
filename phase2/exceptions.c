@@ -42,8 +42,8 @@ void exception_handler()
 		} else if (excCode <= 28) {
 			tlb_handler();
 		} else {
-			PANIC(); // If we could not handle the exception, we
-				 // panic
+			// If we could not handle the exception, we panic
+			PANIC();
 		}
 	}
 }
