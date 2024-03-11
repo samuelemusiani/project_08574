@@ -142,9 +142,9 @@ msg_t *headMessage(struct list_head *head)
 	return a;
 }
 
-// search the first element from the message queue accessed via head whose sender is p_ptr.
-// Return 0 if p_ptr is NULL or the message queue was empty or if no message from p ptr was found;
-// otherwise return 1.
+// search the first element from the message queue accessed via head whose
+// sender is p_ptr. Return 0 if p_ptr is NULL or the message queue was empty or
+// if no message from p ptr was found; otherwise return 1.
 int searchMsg(struct list_head *head, pcb_t *p_ptr)
 {
 	unsigned int status = getSTATUS();

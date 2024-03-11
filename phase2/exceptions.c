@@ -42,7 +42,8 @@ void exception_handler()
 		} else if (excCode <= 28) {
 			tlb_handler();
 		} else {
-			PANIC(); // If we could not handle the exception, we panic
+			PANIC(); // If we could not handle the exception, we
+				 // panic
 		}
 	}
 }
@@ -50,9 +51,9 @@ void exception_handler()
 static void syscall_handler()
 {
 	if ((getCAUSE() & GETEXECCODE) == 8) {
-		// On uMPS3 we should generate fake trap with a reserverd code of PRIVINSTR
-		// that has value 10. In uRISCV this is not needed as a paricular code is
-		// used for SYS in user mode (8).
+		// On uMPS3 we should generate fake trap with a reserverd code
+		// of PRIVINSTR that has value 10. In uRISCV this is not needed
+		// as a paricular code is used for SYS in user mode (8).
 		trap_handler();
 	} else {
 		switch (((state_t *)BIOSDATAPAGE)->reg_a0) {
@@ -91,8 +92,8 @@ static void syscall_handler()
 				deliver_message((state_t *)BIOSDATAPAGE, msg);
 				LDST(((state_t *)BIOSDATAPAGE));
 			} else {
-				// The scheduler will be called and all following code will not
-				// be executed
+				// The scheduler will be called and all
+				// following code will not be executed
 				blockSys();
 			}
 			break;
@@ -117,7 +118,7 @@ static void blockSys()
 static void deliver_message(state_t *p, msg_t *msg)
 {
 	p->reg_a0 = (unsigned int)msg->m_sender;
-	//save the payload in the address pointed by the reg_a2
+	// save the payload in the address pointed by the reg_a2
 	memaddr *payload_destination = (memaddr *)p->reg_a2;
 	if (payload_destination) {
 		*payload_destination = (unsigned int)msg->m_payload;
@@ -143,8 +144,8 @@ static unsigned int send_message(pcb_t *dest, unsigned int payload,
 	msg->m_sender = sender;
 
 	// We need to check if the sender is the interrupt_handler before the
-	// evaluation of is_a_softblocking_request() because we can't dereference the
-	// payload if sent by the interrupt_handler.
+	// evaluation of is_a_softblocking_request() because we can't
+	// dereference the payload if sent by the interrupt_handler.
 	if (dest == ssi_pcb && sender != (pcb_t *)INTERRUPT_HANDLER_MSG &&
 	    is_a_softblocking_request((ssi_payload_t *)payload)) {
 		current_process->do_io = 1;

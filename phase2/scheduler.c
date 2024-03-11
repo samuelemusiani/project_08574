@@ -5,9 +5,9 @@
 
 void scheduler()
 {
-	if (process_count == 1 &&
-	    !searchPcb(&ready_queue,
-		       ssi_pcb)) { // Change when make the fake address
+	if (process_count == 1 && !searchPcb(&ready_queue,
+					     ssi_pcb)) { // Change when make the
+							 // fake address
 		HALT();
 	}
 
@@ -16,7 +16,7 @@ void scheduler()
 			setMIE(MIE_ALL ^ MIE_MTIE_MASK);
 			setSTATUS(1 << MSTATUS_MIE_BIT);
 			WAIT();
-		} else { // softblock_count <= 0
+		} else {	 // softblock_count <= 0
 			PANIC(); // DEADLOCK
 		}
 	}

@@ -13,10 +13,10 @@ void terminate_process(pcb_t *p)
 	outProcQForIO(&ready_queue, p);
 
 	process_count--;
-	// There is a small case in which the process have do_io set to 1 but is not
-	// waiting yet (between a SEND and a RECEIVE). Because it is not waiting, the
-	// softblock_count is not really incremented. We should check if this process
-	// has already entered the blocked state.
+	// There is a small case in which the process have do_io set to 1 but is
+	// not waiting yet (between a SEND and a RECEIVE). Because it is not
+	// waiting, the softblock_count is not really incremented. We should
+	// check if this process has already entered the blocked state.
 	softblock_count -= p->do_io;
 
 	// We should terminate all his progenesis

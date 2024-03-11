@@ -30,7 +30,7 @@ struct list_head pcb_blocked_on_clock;
 // device [Section 5.7- pops].
 
 pcb_t *ssi_pcb; // This is needed as p2test expects it :(
-	// But it could be a fake number :)
+		// But it could be a fake number :)
 
 int main(void)
 {
@@ -63,7 +63,8 @@ int main(void)
 	ssi_pcb = allocPcb();
 	insertProcQ(&ready_queue, ssi_pcb);
 	process_count++;
-	// In particular, this process needs to have interrupts enabled and kernel mode
+	// In particular, this process needs to have interrupts enabled and
+	// kernel mode
 	ssi_pcb->p_s.status = KERNELMODE | INTERRUPTS_ENBALED;
 	ssi_pcb->p_s.mie = MIE_ALL;
 	// the SP set to RAMTOP (i.e., use the last RAM frame for its stack)

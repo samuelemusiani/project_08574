@@ -75,7 +75,7 @@ support_t pFiveSupport;
 unsigned int p5Stack; /* so we can allocate new stack for 2nd p5 */
 
 int p1p2sync = 0; /* to check on p1/p2 synchronization */
-int p4inc = 1; /* p4 incarnation number */
+int p4inc = 1;	  /* p4 incarnation number */
 
 memaddr *p5MemLocation = 0; /* To cause a p5 trap */
 
@@ -245,9 +245,9 @@ void test()
 	p4state.mie = MIE_ALL;
 
 	STST(&p5state);
-	p5Stack = p5state.reg_sp =
-		p4state.reg_sp -
-		(2 * QPAGE); /* because there will 2 p4 running*/
+	p5Stack = p5state.reg_sp = p4state.reg_sp - (2 * QPAGE); /* because
+								    there will 2
+								    p4 running*/
 	p5state.pc_epc = (memaddr)p5;
 	p5state.status |= MSTATUS_MIE_MASK | MSTATUS_MPP_M;
 	p5state.mie = MIE_ALL;
@@ -333,8 +333,8 @@ void test()
 		print_term0("ERROR: wrong p2 pid\n");
 
 	SYSCALL(SENDMESSAGE, (unsigned int)p2_pcb, START, 0); /* start p2 */
-	SYSCALL(RECEIVEMESSAGE, (unsigned int)p2_pcb, 0,
-		0); /* wait p2 to end */
+	SYSCALL(RECEIVEMESSAGE, (unsigned int)p2_pcb, 0, 0);  /* wait p2 to end
+							       */
 
 	/* check p2 sync */
 	if (p1p2sync == 0)
@@ -347,8 +347,8 @@ void test()
 	p3pid = p3_pcb->p_pid;
 
 	SYSCALL(SENDMESSAGE, (unsigned int)p3_pcb, START, 0); /* start p3 */
-	SYSCALL(RECEIVEMESSAGE, (unsigned int)p3_pcb, 0,
-		0); /* wait p3 to end */
+	SYSCALL(RECEIVEMESSAGE, (unsigned int)p3_pcb, 0, 0);  /* wait p3 to end
+							       */
 
 	print_term0("p1 knows p3 ended\n");
 
@@ -480,7 +480,7 @@ void test()
 /* p2 -- sync and cputime-SYS test process */
 void p2()
 {
-	cpu_t now1, now2; /* times of day        */
+	cpu_t now1, now2;     /* times of day        */
 	cpu_t cpu_t1, cpu_t2; /* cpu time used       */
 
 	// p2 wait until p1 sends a message
@@ -569,7 +569,8 @@ void p3()
 
 	print_term0("p3 - CLOCKWAIT OK\n");
 
-	/* now let's check to see if we're really charge for CPU time correctly */
+	/* now let's check to see if we're really charge for CPU time correctly
+	 */
 	ssi_payload_t get_time_payload = {
 		.service_code = GETTIME,
 		.arg = NULL,
@@ -643,7 +644,7 @@ void p4()
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb,
 		(unsigned int)(&p4_pcb_v2), 0);
 
-	SYSCALL(SENDMESSAGE, (unsigned int)p4_pcb_v2, 0, 0); // start
+	SYSCALL(SENDMESSAGE, (unsigned int)p4_pcb_v2, 0, 0);	// start
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)p4_pcb_v2, 0, 0); // wait wake up
 
 	print_term0("p4 is OK\n");
@@ -721,8 +722,10 @@ void p5mm()
 	// turn off kernel mode
 	pFiveSupport.sup_exceptState[PGFAULTEXCEPT].status &= (~MSTATUS_MPP_M);
 	// pFiveSupport.sup_exceptState[PGFAULTEXCEPT].status &= (~0x800);
-	pFiveSupport.sup_exceptState[PGFAULTEXCEPT].pc_epc =
-		(memaddr)p5b; /* return to p5b()  */
+	pFiveSupport.sup_exceptState[PGFAULTEXCEPT].pc_epc = (memaddr)p5b; /* return
+									      to
+									      p5b()
+									    */
 
 	LDST(&(pFiveSupport.sup_exceptState[PGFAULTEXCEPT]));
 }
@@ -746,8 +749,8 @@ void p5sys()
 	default:
 		print_term0("ERROR: p5sys cannot recognise the status\n");
 	}
-	pFiveSupport.sup_exceptState[GENERALEXCEPT].pc_epc +=
-		4; /* to avoid SYS looping */
+	pFiveSupport.sup_exceptState[GENERALEXCEPT].pc_epc += 4; /* to avoid SYS
+								    looping */
 
 	LDST(&(pFiveSupport.sup_exceptState[GENERALEXCEPT]));
 }
@@ -791,8 +794,8 @@ void p6()
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)test_pcb, 0, 0);
 	print_term0("p6 starts\n");
 
-	SYSCALL(1, 0, 0,
-		0); /* should cause termination because p6 has no trap vector */
+	SYSCALL(1, 0, 0, 0); /* should cause termination because p6 has no trap
+				vector */
 
 	print_term0("ERROR: p6 alive after SYS9() with no trap vector\n");
 	PANIC();
