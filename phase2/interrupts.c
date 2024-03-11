@@ -12,10 +12,10 @@ static void device_interrupt_handler(unsigned int iln);
 void interrupt_handler()
 {
 	/*
-	 * We can only handle one interrupt at a time, the one with the highest 
-   * priority; the interrupt with the highest priority is the lowest device 
-   * number with the lowest interrupt line number.
-	*/
+	 * We can only handle one interrupt at a time, the one with the highest
+	 * priority; the interrupt with the highest priority is the lowest
+	 * device number with the lowest interrupt line number.
+	 */
 	unsigned int mip = getMIP();
 	// if interr > 0, there is still at least one interrupt to handle
 	unsigned int interr = 1 << IL_TIMER | 1 << IL_CPUTIMER |
@@ -49,10 +49,11 @@ void interrupt_handler()
 static void device_interrupt_handler(unsigned int iln)
 {
 	/*
-	 * CDEV_BITMAP_ADDR(IntlineNo) is the address of the interrupting devices 
-   * bitmap. 8 bit, each bit represents a device. We need the device with the 
-   * lower number that has 1 on the bit corresponding to it.
-	*/
+	 * CDEV_BITMAP_ADDR(IntlineNo) is the address of the interrupting
+	 * devices bitmap. 8 bit, each bit represents a device. We need the
+	 * device with the lower number that has 1 on the bit corresponding to
+	 * it.
+	 */
 	int bitmap = *(char *)CDEV_BITMAP_ADDR(iln);
 	int dev_n = 0;
 	int tmp1 = bitmap & (1 << dev_n);
@@ -69,12 +70,13 @@ static void device_interrupt_handler(unsigned int iln)
 	char statusCode;
 	if (iln == IL_TERMINAL) {
 		/*
-     * For the duration of the operation, the sub-device’s status is “Device Busy.”
-     * Upon completion of the operation, an interrupt is raised and an appropriate
-     * status code is set in TRANSM_STATUS or RECV_STATUS respectively;
-     * “Character Transmitted/Received” for successful completion (code 5) or
-     * one of the error codes (codes 0, 2, 4).
-     */
+		 * For the duration of the operation, the sub-device’s status is
+		 * “Device Busy.” Upon completion of the operation, an interrupt
+		 * is raised and an appropriate status code is set in
+		 * TRANSM_STATUS or RECV_STATUS respectively; “Character
+		 * Transmitted/Received” for successful completion (code 5) or
+		 * one of the error codes (codes 0, 2, 4).
+		 */
 		char transm_status = devAddrBase->term.transm_status;
 		if (transm_status != 1 && transm_status != 3) {
 			statusCode = transm_status;

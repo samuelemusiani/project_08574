@@ -13,9 +13,9 @@
 #define INTERRUPT_HANDLER_MSG 0x1 // Fake address for interrupt handler
 typedef union interrupt_handler_io_msg {
 	struct {
-		char service; // 0 doio, 1 clock
-		char status; // Status of device
-		char device_type; // Device type {0..4}
+		char service;	    // 0 doio, 1 clock
+		char status;	    // Status of device
+		char device_type;   // Device type {0..4}
 		char device_number; // Interrupt line {0..6}
 	} fields;
 	unsigned int payload;

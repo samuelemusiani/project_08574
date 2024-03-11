@@ -2,7 +2,7 @@
 #include <uriscv/liburiscv.h>
 
 pcb_t pcbTable[MAXPROC]; /* PCB array with maximum size 'MAXPROC' */
-LIST_HEAD(pcbFree_h); /* List of free PCBs                     */
+LIST_HEAD(pcbFree_h);	 /* List of free PCBs                     */
 static int next_pid = 1;
 
 // insert the element pointed to by p onto the pcbFree list.
@@ -265,7 +265,8 @@ pcb_t *outChild(pcb_t *p)
 	return p;
 }
 
-//Return 1 if the pcb pointed by p is in the list whose head is pointed to by head. Return 0 otherwise
+// Return 1 if the pcb pointed by p is in the list whose head is pointed to by
+// head. Return 0 otherwise
 int searchPcb(struct list_head *head, pcb_t *p)
 {
 	unsigned int status = getSTATUS();

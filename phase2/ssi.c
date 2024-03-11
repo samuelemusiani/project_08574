@@ -95,8 +95,9 @@ void ssi()
 			}
 
 			default: {
-				// If service does not match any of those provided by the SSI,
-				// the SSI should terminate the process and its progeny.
+				// If service does not match any of those
+				// provided by the SSI, the SSI should terminate
+				// the process and its progeny.
 				terminate_process((pcb_t *)sender);
 				break;
 			}
