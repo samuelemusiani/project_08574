@@ -5,7 +5,7 @@
 
 void terminate_process(pcb_t *p)
 {
-	if (p == ssi_pcb)
+	if (p == ssi_pcb_real)
 		PANIC();
 
 	outChild(p);

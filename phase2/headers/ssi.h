@@ -21,6 +21,8 @@ typedef union interrupt_handler_io_msg {
 	unsigned int payload;
 } interrupt_handler_io_msg_t;
 
+#define SSI_FAKE_ADDR (pcb_t *)0x2
+
 void ssi();
 int is_a_softblocking_request(ssi_payload_t *p);
 
