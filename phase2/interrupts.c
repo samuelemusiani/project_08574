@@ -53,7 +53,9 @@ void interrupt_handler()
 		// Load the state of the process
 		LDST((state_t *)BIOSDATAPAGE); 
 }
-
+/**
+ * This function handles device interrupts for a specific interrupt line.
+ */
 static void device_interrupt_handler(unsigned int iln)
 {
 	/*
@@ -120,6 +122,9 @@ static void device_interrupt_handler(unsigned int iln)
 	send_message_to_ssi(msg.payload);
 }
 
+// Every 5ms the PLT raises an interrupt
+// The function save the state of the current process 
+// and put it in the ready queue
 static void plt_interrupt_handler()
 {
 	current_process->p_s = *(state_t *)BIOSDATAPAGE;

@@ -54,12 +54,8 @@ void exception_handler()
 }
 
 /**
- * This function handles system calls
+ * Handles system calls
  * It determines the type of syscall based on the value of reg_a0 (-1 = SENDMESSAGE, -2 = RECEIVEMESSAGE)
- * In case of SENDMESSAGE, it save a pointer to the dest PCB from the reg_a1 and the payload from the reg_a2
- * It then checks if the dest PCB is valid and calls send_message because it is an asynchronous operation
- * In case of RECEIVEMESSAGE, it save a pointer to the sender PCB from the reg_a1 and check if there is a message in the inbox
- * If there is a message, it calls deliver_message, otherwise it blocks the process because it's a synchronous operation
  */
 static void syscall_handler()
 {
@@ -110,8 +106,7 @@ static void syscall_handler()
 				deliver_message((state_t *)BIOSDATAPAGE, msg);
 				LDST(((state_t *)BIOSDATAPAGE));
 			} else {
-				// The scheduler will be called and all
-				// following code will not be executed
+				// Block the process and call the scheduler
 				blockSys();
 			}
 			break;
@@ -150,8 +145,8 @@ static void deliver_message(state_t *p, msg_t *msg)
 	if (payload_destination) {
 		*payload_destination = (unsigned int)msg->m_payload;
 	}
-	p->pc_epc += 4;
-	freeMsg(msg);
+	p->pc_epc += 4; // increment the program counter to avoid sys loop
+	freeMsg(msg); 
 }
 
 static int is_waiting_for_me(pcb_t *sender, pcb_t *dest)
@@ -163,15 +158,8 @@ static int is_waiting_for_me(pcb_t *sender, pcb_t *dest)
 	       dest->p_s.reg_a1 == ANYMESSAGE;
 }
 
-/**
- * This function sends a message to the specified destination process.
- *
- * If the destination process is not in the ready queue and is blocked waiting for a message from the sender,
- * the function inserts the destination process into the ready queue, updates the do_io flag if necessary, and delivers
- * the message to the destination process. Otherwise, it inserts the message into the destination
- * process's message inbox.
- */
 
+// This function sends a message to the specified destination process.
 static unsigned int send_message(pcb_t *dest, unsigned int payload,
 				 pcb_t *sender)
 {
@@ -190,6 +178,13 @@ static unsigned int send_message(pcb_t *dest, unsigned int payload,
 		current_process->do_io = 1;
 	}
 
+	/*
+	 * If the destination process is not in the ready queue and is blocked 
+	 * waiting for a message from the sender,
+ 	 * the function inserts the destination process into the ready queue, 
+	 * updates the do_io flag if necessary, and delivers
+ 	 * the message to the destination process.
+	*/
 	if (!searchPcb(&ready_queue, dest) && dest != current_process &&
 	    is_waiting_for_me(sender, dest)) {
 		// if dest is not in the ready queue,
@@ -211,6 +206,9 @@ static unsigned int send_message(pcb_t *dest, unsigned int payload,
 	return 0;
 }
 
+/**
+ * Sends a message to the SSI (System Service Interface) with the specified payload
+ */
 void send_message_to_ssi(unsigned int payload)
 {
 	send_message(ssi_pcb_real, payload, (pcb_t *)INTERRUPT_HANDLER_MSG);
