@@ -63,6 +63,10 @@ static void syscall_handler()
 			unsigned int payload =
 				((state_t *)BIOSDATAPAGE)->reg_a2;
 
+			// Subsitute ssi_pcb addr
+			if (dest == SSI_FAKE_ADDR)
+				dest = ssi_pcb_real;
+
 			unsigned int return_val = DEST_NOT_EXIST;
 
 			if (isPcbValid(dest)) {
@@ -82,6 +86,7 @@ static void syscall_handler()
 		case RECEIVEMESSAGE: {
 			pcb_t *sender =
 				(pcb_t *)((state_t *)BIOSDATAPAGE)->reg_a1;
+
 			msg_t *msg = popMessage(&current_process->msg_inbox,
 						((pcb_t *)sender));
 
@@ -118,6 +123,11 @@ static void blockSys()
 static void deliver_message(state_t *p, msg_t *msg)
 {
 	p->reg_a0 = (unsigned int)msg->m_sender;
+	pcb_t *tmp_sender = msg->m_sender;
+	if (tmp_sender == ssi_pcb_real)
+		tmp_sender = SSI_FAKE_ADDR;
+
+	p->reg_a0 = (unsigned int)tmp_sender;
 	// save the payload in the address pointed by the reg_a2
 	memaddr *payload_destination = (memaddr *)p->reg_a2;
 	if (payload_destination) {
@@ -129,6 +139,9 @@ static void deliver_message(state_t *p, msg_t *msg)
 
 static int is_waiting_for_me(pcb_t *sender, pcb_t *dest)
 {
+	if (sender == ssi_pcb_real)
+		sender = SSI_FAKE_ADDR;
+
 	return dest->p_s.reg_a1 == (unsigned int)sender ||
 	       dest->p_s.reg_a1 == ANYMESSAGE;
 }
@@ -141,12 +154,12 @@ static unsigned int send_message(pcb_t *dest, unsigned int payload,
 		return MSGNOGOOD;
 
 	msg->m_payload = payload;
-	msg->m_sender = sender;
+	msg->m_sender = sender == ssi_pcb_real ? SSI_FAKE_ADDR : sender;
 
 	// We need to check if the sender is the interrupt_handler before the
 	// evaluation of is_a_softblocking_request() because we can't
 	// dereference the payload if sent by the interrupt_handler.
-	if (dest == ssi_pcb && sender != (pcb_t *)INTERRUPT_HANDLER_MSG &&
+	if (dest == ssi_pcb_real && sender != (pcb_t *)INTERRUPT_HANDLER_MSG &&
 	    is_a_softblocking_request((ssi_payload_t *)payload)) {
 		current_process->do_io = 1;
 	}
@@ -174,7 +187,7 @@ static unsigned int send_message(pcb_t *dest, unsigned int payload,
 
 void send_message_to_ssi(unsigned int payload)
 {
-	send_message(ssi_pcb, payload, (pcb_t *)INTERRUPT_HANDLER_MSG);
+	send_message(ssi_pcb_real, payload, (pcb_t *)INTERRUPT_HANDLER_MSG);
 }
 
 static void trap_handler()

@@ -5,8 +5,7 @@
 
 void scheduler()
 {
-	// Change when make the fake address
-	if (process_count == 1 && !searchPcb(&ready_queue, ssi_pcb)) {
+	if (process_count == 1 && !searchPcb(&ready_queue, ssi_pcb_real)) {
 		HALT();
 	}
 

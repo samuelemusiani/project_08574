@@ -29,8 +29,8 @@ struct list_head pcb_blocked_on_clock;
 // sub-devices, the Nucleus maintains two lists/pointers for each terminal
 // device [Section 5.7- pops].
 
-pcb_t *ssi_pcb; // This is needed as p2test expects it :(
-		// But it could be a fake number :)
+pcb_t *ssi_pcb;
+pcb_t *ssi_pcb_real;
 
 int main(void)
 {
@@ -60,17 +60,19 @@ int main(void)
 	LDIT(PSECOND);
 
 	// Instantiate the first process (ssi)
-	ssi_pcb = allocPcb();
-	insertProcQ(&ready_queue, ssi_pcb);
+	ssi_pcb_real = allocPcb();
+	insertProcQ(&ready_queue, ssi_pcb_real);
 	process_count++;
 	// In particular, this process needs to have interrupts enabled and
 	// kernel mode
-	ssi_pcb->p_s.status = KERNELMODE | INTERRUPTS_ENBALED;
-	ssi_pcb->p_s.mie = MIE_ALL;
+	ssi_pcb_real->p_s.status = KERNELMODE | INTERRUPTS_ENBALED;
+	ssi_pcb_real->p_s.mie = MIE_ALL;
 	// the SP set to RAMTOP (i.e., use the last RAM frame for its stack)
-	RAMTOP(ssi_pcb->p_s.reg_sp);
+	RAMTOP(ssi_pcb_real->p_s.reg_sp);
 	// PC set to the address of ssi() function.
-	ssi_pcb->p_s.pc_epc = (memaddr)ssi;
+	ssi_pcb_real->p_s.pc_epc = (memaddr)ssi;
+
+	ssi_pcb = SSI_FAKE_ADDR;
 
 	// Instantiate the second process (test)
 	pcb_t *test_pcb = allocPcb();
