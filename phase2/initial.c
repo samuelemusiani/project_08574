@@ -84,7 +84,7 @@ int main(void)
 	// the SP set to RAMTOP - (2 * FRAMESIZE)
 	memaddr ramtop;
 	RAMTOP(ramtop);
-	unsigned int framesize = 0x00001000;
+	unsigned int framesize = PAGESIZE;
 	test_pcb->p_s.reg_sp = ramtop - (2 * framesize);
 	// PC set to the address of test.
 	test_pcb->p_s.pc_epc = (memaddr)test;
