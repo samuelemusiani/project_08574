@@ -28,7 +28,7 @@ void uTLB_RefillHandler()
 	LDST((state_t *)0x0FFFF000);
 }
 
-/**
+/*
  * This function handles exceptions that occur during program execution.
  * It determines the type of exception based on the value of the .Excode
  * in the cause register and calls the appropriate handler function.
@@ -53,7 +53,7 @@ void exception_handler()
 	}
 }
 
-/**
+/*
  * Handles system calls
  * It determines the type of syscall based on the value of reg_a0 (-1 = SENDMESSAGE, -2 = RECEIVEMESSAGE)
  */
@@ -132,21 +132,31 @@ static void blockSys()
 	scheduler();
 }
 
+/*
+ * Takes a process state and a message and delivers the message to the process
+ * saving the sender and the payload in the respective registers
+ */
 static void deliver_message(state_t *p, msg_t *msg)
 {
+	// When returning form SYS2 the the return value (sender of msg)
+	// need to be saved in the reg_a0
 	p->reg_a0 = (unsigned int)msg->m_sender;
 	pcb_t *tmp_sender = msg->m_sender;
 	if (tmp_sender == ssi_pcb_real)
 		tmp_sender = SSI_FAKE_ADDR;
 
 	p->reg_a0 = (unsigned int)tmp_sender;
-	// save the payload in the address pointed by the reg_a2
+
+	// If SYS2 need to receive a payload, the address in which the payload must
+	// be saved is in reg_a2. If SYS2 does not need to receive any payload,
+	// reg_a2 is set to NULL
 	memaddr *payload_destination = (memaddr *)p->reg_a2;
+	// Check if the payload_destination is not NULL
 	if (payload_destination) {
 		*payload_destination = (unsigned int)msg->m_payload;
 	}
-	p->pc_epc += 4; // increment the program counter to avoid sys loop
-	freeMsg(msg); 
+	p->pc_epc += 4; // Increment the program counter to avoid sys loop
+	freeMsg(msg);
 }
 
 static int is_waiting_for_me(pcb_t *sender, pcb_t *dest)
@@ -157,7 +167,6 @@ static int is_waiting_for_me(pcb_t *sender, pcb_t *dest)
 	return dest->p_s.reg_a1 == (unsigned int)sender ||
 	       dest->p_s.reg_a1 == ANYMESSAGE;
 }
-
 
 // This function sends a message to the specified destination process.
 static unsigned int send_message(pcb_t *dest, unsigned int payload,
@@ -170,10 +179,12 @@ static unsigned int send_message(pcb_t *dest, unsigned int payload,
 	msg->m_payload = payload;
 	msg->m_sender = sender == ssi_pcb_real ? SSI_FAKE_ADDR : sender;
 
-	// We need to check if the sender is the interrupt_handler before the
-	// evaluation of is_a_softblocking_request() because we can't
-	// dereference the payload if sent by the interrupt_handler.
-	if (dest == ssi_pcb_real && sender != (pcb_t *)INTERRUPT_HANDLER_MSG &&
+	/* 
+	 * We need to check if the sender is the interrupt_handler before the
+	 * evaluation of is_a_softblocking_request() because we can't dereference the
+	 * payload if sent by the interrupt_handler.
+	 */
+	if (dest == ssi_pcb && sender != (pcb_t *)INTERRUPT_HANDLER_MSG &&
 	    is_a_softblocking_request((ssi_payload_t *)payload)) {
 		current_process->do_io = 1;
 	}
@@ -206,24 +217,34 @@ static unsigned int send_message(pcb_t *dest, unsigned int payload,
 	return 0;
 }
 
-/**
+/*
  * Sends a message to the SSI (System Service Interface) with the specified payload
+ * without causing a SYSCAll
  */
 void send_message_to_ssi(unsigned int payload)
 {
 	send_message(ssi_pcb_real, payload, (pcb_t *)INTERRUPT_HANDLER_MSG);
 }
 
+// Program Trap Exception Handler
 static void trap_handler()
 {
 	pass_up_or_die(GENERALEXCEPT);
 }
 
+// TLB Exception Handler
 static void tlb_handler()
 {
 	pass_up_or_die(PGFAULTEXCEPT);
 }
 
+/*
+ * Passes up an exception or terminates the current process.
+ * 
+ * If the current process does not have a support structure, it is terminated
+ * and the scheduler is called. Otherwise, we pass up the exception handling
+ * to the support structure.
+ */
 static void pass_up_or_die(int excp_value)
 {
 	if (current_process->p_supportStruct == NULL) {

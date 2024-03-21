@@ -9,30 +9,33 @@ static void plt_interrupt_handler();
 static void it_interrupt_handler();
 static void device_interrupt_handler(unsigned int iln);
 
-/**
+/*
  * Handles interrupts by checking the interrupt priority and 
  * calling the corresponding interrupt handler functions.
  * We can only handle one interrupt at a time, the one with the highest 
- * priority; the interrupt with the highest priority is the lowest device 
- * number with the lowest interrupt line number.
+ * priority. 
  */
 void interrupt_handler()
 {
 	// MIP register contains the pending interrupts
 	// Three types of interrupts: timer, cpu timer, and devices
-	unsigned int mip = getMIP(); 
-	// if interr > 0, there is still at least one interrupt to handle
+	unsigned int mip = getMIP();
+
+	// interr has 0 in all bits except in the 3rd, 7th, 17-21th bits
+	// 5 types of device from 17 to 21
 	unsigned int interr = 1 << IL_TIMER | 1 << IL_CPUTIMER |
-			      31 << DEV_IL_START; // 5 types of device from 17 to 21
-				  // interr has 0 in all bits except in the 3rd, 7th, 17-21th bits
-	while (mip & interr) { // while there is at least one interrupt to handle
+			      31 << DEV_IL_START;
+
+	while (mip & interr) {
 		if (mip & 1 << IL_TIMER) {
-			mip &= ~(1 << IL_TIMER);
+			mip &= ~(1 << IL_TIMER); // clear the interrupt bit
 			it_interrupt_handler();
 		} else if (mip & 1 << IL_CPUTIMER) {
 			mip &= ~(1 << IL_CPUTIMER);
 			plt_interrupt_handler();
 		} else {
+			// For devices the interrupt with the highest priority is the
+			// lowest device number with the lowest interrupt line number.
 			int iln = DEV_IL_START;
 			int max_il = DEV_IL_START + N_EXT_IL;
 			while (iln < max_il && !(mip & 1 << iln)) {
@@ -46,23 +49,22 @@ void interrupt_handler()
 		}
 	}
 	// If the CPU was in WAIT state before the interrupt occured
-	if (current_process == NULL) 
+	if (current_process == NULL)
 		scheduler();
 	// If there was a process running before the interrupt occured
 	else
 		// Load the state of the process
-		LDST((state_t *)BIOSDATAPAGE); 
+		LDST((state_t *)BIOSDATAPAGE);
 }
-/**
+/*
  * This function handles device interrupts for a specific interrupt line.
  */
 static void device_interrupt_handler(unsigned int iln)
 {
 	/*
-	 * CDEV_BITMAP_ADDR(IntlineNo) is the address of the interrupting
-	 * devices bitmap. 8 bit, each bit represents a device. We need the
-	 * device with the lower number that has 1 on the bit corresponding to
-	 * it.
+	 * CDEV_BITMAP_ADDR(IntlineNo) is the address of the interrupting devices 
+     * bitmap. 8 bit, each bit represents a device. We need the device with the 
+     * lower number that has 1 on the bit corresponding to it.
 	 */
 	int bitmap = *(char *)CDEV_BITMAP_ADDR(iln);
 	int dev_n = 0;
@@ -107,24 +109,42 @@ static void device_interrupt_handler(unsigned int iln)
 		devAddrBase->dtp.command = ACK;
 	}
 
-	// Send a message to the ssi with the status code; it will be its job
-	// to unblock the process
-	interrupt_handler_io_msg_t msg = { .fields.service = 0,
-					   .fields.device_type =
-						   EXT_IL_INDEX(iln),
-					   .fields.device_number = dev_n,
-					   .fields.status = statusCode };
-
+	interrupt_handler_io_msg_t msg = {
+		.fields.service = 0, // doio
+		.fields.device_type = EXT_IL_INDEX(iln), // type of device
+		.fields.device_number = dev_n, // number of device
+		.fields.status = statusCode // device's status
+	}; 
+	
+	
 	if (device_is_terminal) {
 		msg.fields.device_number |=
 			terminal_transm ? SUBTERMINAL_TRANSM : SUBTERMINAL_RECV;
 	}
+
+
+
+	/*
+	 * Send a message to the ssi with the status code; it will be its job
+	 * to unblock the process
+	 */
+
+	/*
+	 * Avoiding syscall because it would generate an exception and
+	 * ovveride the Nucleous stack memory.
+	 * The payload is not a pointer, but an unsigned int that stores all the
+	 * informations that the SSI will need. A pointer is avoided because
+	 * it would point to an address in the interrupt handler function
+	 * that could be overwritten by the next interrupt.
+	 */
 	send_message_to_ssi(msg.payload);
 }
 
-// Every 5ms the PLT raises an interrupt
-// The function save the state of the current process 
-// and put it in the ready queue
+/*
+ * Every 5ms the PLT raises an interrupt
+ * The function save the state of the current process
+ * and put it in the ready queue
+ */
 static void plt_interrupt_handler()
 {
 	current_process->p_s = *(state_t *)BIOSDATAPAGE;
@@ -132,6 +152,11 @@ static void plt_interrupt_handler()
 	current_process = NULL;
 }
 
+/*
+ * Load the interval timer with 100ms
+ * Send a message to the ssi with the service field set to 1
+ * that will unblock all PCBs waiting a PseduoClock Tick
+ */
 static void it_interrupt_handler()
 {
 	LDIT(PSECOND);

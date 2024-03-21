@@ -3,7 +3,7 @@
 #include "headers/exceptions.h"
 #include <uriscv/liburiscv.h>
 
-/**
+/*
  * The scheduler function is responsible for selecting the next process to dispatch
  * by checking the state of the ready queue.
  */
