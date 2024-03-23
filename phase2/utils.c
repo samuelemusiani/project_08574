@@ -42,8 +42,14 @@ void *memcpy(void *dest, const void *src, unsigned int len)
 
 // type = {0..4}
 // number = {0..7}
-int hash_from_device_type_number(int type, int number)
+// If the type of device is a terminal, the trans bit indicate the subterminal:
+// 0 is transm, 1 is recv. If the type is no a terminal the transm bit is
+// ignored
+int hash_from_device_type_number(int type, int number, int transm)
 {
+	if (type == EXT_IL_INDEX(IL_TERMINAL))
+		type += !!transm;
+
 	return type * N_DEV_PER_IL + number;
 }
 
@@ -56,7 +62,14 @@ int comm_add_to_number(memaddr command_addr)
 	int interrupt_line_number = tmp / 8; // Start from zero
 	int dev_number = tmp - interrupt_line_number * N_DEV_PER_IL;
 
-	return hash_from_device_type_number(interrupt_line_number, dev_number);
+	int transm = 0;
+	if (dev_number == EXT_IL_INDEX(IL_TERMINAL)) {
+		transm = !!(command_addr -
+			    DEV_REG_ADDR(interrupt_line_number, dev_number));
+	}
+
+	return hash_from_device_type_number(interrupt_line_number, dev_number,
+					    transm);
 }
 
 void update_cpu_time()

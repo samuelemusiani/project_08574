@@ -11,6 +11,10 @@
 #include <uriscv/liburiscv.h>
 
 #define INTERRUPT_HANDLER_MSG 0x1 // Fake address for interrupt handler
+#define SUBTERMINAL_TRANSM 0 << 7
+#define SUBTERMINAL_RECV 1 << 7
+#define SUBTERMINAL_TYPE SUBTERMINAL_RECV
+#define DEVICE_TYPE_MASK ~(SUBTERMINAL_RECV)
 typedef union interrupt_handler_io_msg {
 	struct {
 		char service;	    // 0 doio, 1 clock
