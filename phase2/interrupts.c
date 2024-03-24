@@ -68,7 +68,11 @@ static void device_interrupt_handler(unsigned int iln)
 
 	devreg_t *devAddrBase = (devreg_t *)DEV_REG_ADDR(iln, dev_n);
 	char statusCode;
+
+	int device_is_terminal; // The interrupt is from a terminal
+	int terminal_transm;	// The interrupt is from a transm sub-terminal
 	if (iln == IL_TERMINAL) {
+		device_is_terminal = 1;
 		/*
 		 * For the duration of the operation, the sub-device’s status is
 		 * “Device Busy.” Upon completion of the operation, an interrupt
@@ -81,11 +85,14 @@ static void device_interrupt_handler(unsigned int iln)
 		if (transm_status != 1 && transm_status != 3) {
 			statusCode = transm_status;
 			devAddrBase->term.transm_command = ACK;
+			terminal_transm = 1;
 		} else {
 			statusCode = devAddrBase->term.recv_status;
 			devAddrBase->term.recv_command = ACK;
+			terminal_transm = 0;
 		}
 	} else {
+		device_is_terminal = 0;
 		statusCode = devAddrBase->dtp.status;
 		devAddrBase->dtp.command = ACK;
 	}
@@ -97,6 +104,11 @@ static void device_interrupt_handler(unsigned int iln)
 						   EXT_IL_INDEX(iln),
 					   .fields.device_number = dev_n,
 					   .fields.status = statusCode };
+
+	if (device_is_terminal) {
+		msg.fields.device_number |=
+			terminal_transm ? SUBTERMINAL_TRANSM : SUBTERMINAL_RECV;
+	}
 	send_message_to_ssi(msg.payload);
 }
 

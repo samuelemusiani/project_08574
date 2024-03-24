@@ -12,7 +12,7 @@
 
 void terminate_process(pcb_t *p);
 int comm_add_to_number(memaddr command_addr);
-int hash_from_device_type_number(int type, int il);
+int hash_from_device_type_number(int type, int number, int transm);
 void update_cpu_time();
 
 #endif

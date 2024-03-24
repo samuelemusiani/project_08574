@@ -11,7 +11,8 @@ static void wait_for_clock(pcb_t *p);
 static support_t *get_support_data(pcb_t *p);
 static int get_process_id(pcb_t *sender, void *arg);
 
-static void answer_do_io(int device_type, int device_number, int status);
+static void answer_do_io(int device_type, int device_number, int transm,
+			 int status);
 static void answer_wait_for_clock();
 
 void ssi()
@@ -28,8 +29,11 @@ void ssi()
 			};
 			switch (msg.fields.service) {
 			case 0: {
-				answer_do_io(msg.fields.device_type,
+				answer_do_io(msg.fields.device_type &
+						     DEVICE_TYPE_MASK,
 					     msg.fields.device_number,
+					     msg.fields.device_type &
+						     SUBTERMINAL_TYPE,
 					     msg.fields.status);
 				break;
 			}
@@ -165,13 +169,15 @@ static int get_process_id(pcb_t *sender, void *arg)
 		return sender->p_parent->p_pid;
 }
 
-static void answer_do_io(int device_type, int device_number, int status)
+static void answer_do_io(int device_type, int device_number, int transm,
+			 int status)
 {
 	// If the interrupt handler sends me only the device type and
 	// his number (so the position in the pcb_blocked_on_device array),
 	// I can look up the pcb to send the message to and remove him from
 	// the list
-	int tmp = hash_from_device_type_number(device_type, device_number);
+	int tmp = hash_from_device_type_number(device_type, device_number,
+					       transm);
 	pcb_t *dest = removeProcQForIO(&pcb_blocked_on_device[tmp]);
 	SYSCALL(SENDMESSAGE, (unsigned int)dest, status, 0);
 }

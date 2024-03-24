@@ -21,7 +21,7 @@ extern pcb_t *current_process;
 // network card, printer, and terminal. Furthermore, μRISCV can support up to
 // eight instances of each device type.
 // Terminal devices are actually two independent sub-devices,
-#define MAXDEVICE (N_EXT_IL * N_DEV_PER_IL) // 5 * 8 = 40
+#define MAXDEVICE ((N_EXT_IL + 1) * N_DEV_PER_IL) // (5 + 1) * 8 = 48
 
 extern struct list_head pcb_blocked_on_device[MAXDEVICE]; // Array of queues
 extern struct list_head pcb_blocked_on_clock;
