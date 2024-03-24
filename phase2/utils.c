@@ -42,7 +42,7 @@ void *memcpy(void *dest, const void *src, unsigned int len)
 
 // type = {0..4}
 // number = {0..7}
-// If the type of device is a terminal, the trans bit indicate the subterminal:
+// If the type of device is a terminal, the transm bit indicate the subterminal:
 // 0 is transm, 1 is recv. If the type is no a terminal the transm bit is
 // ignored
 int hash_from_device_type_number(int type, int number, int transm)
