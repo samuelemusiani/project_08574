@@ -14,8 +14,7 @@ void scheduler()
 	 * blocked on a receive syscall (so it's not in the ready queue), the
 	 * scheduler halts the system.
 	 */
-	if (process_count == 1 && !searchPcb(&ready_queue,
-					     ssi_pcb)) {
+	if (process_count == 1 && !searchPcb(&ready_queue, ssi_pcb)) {
 		HALT();
 	}
 
