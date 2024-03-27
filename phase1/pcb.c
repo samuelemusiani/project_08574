@@ -3,10 +3,10 @@
 
 /*
  * Every function that manipulates the PCBs must be executed with interrupts
- * disabled. In fact, we set: START: unsigned int status = getSTATUS();
+ * disabled. In fact, every function begins and ends in the same manner:
+ * unsigned int status = getSTATUS();
  * setSTATUS(status & ~(1 << 3));
- *
- * END:
+ * ...
  * setSTATUS(status);
  */
 
