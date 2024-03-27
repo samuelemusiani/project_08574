@@ -34,9 +34,11 @@ void interrupt_handler()
 			mip &= ~(1 << IL_CPUTIMER);
 			plt_interrupt_handler();
 		} else {
-			// For devices the interrupt with the highest priority
-			// is the lowest device number with the lowest interrupt
-			// line number.
+                         /*
+			  * For devices, the interrupt with the highest priority
+			  * is the lowest device number with the lowest interrupt
+			  * line number.
+			  */
 			int iln = DEV_IL_START;
 			int max_il = DEV_IL_START + N_EXT_IL;
 			while (iln < max_il && !(mip & 1 << iln)) {
