@@ -222,7 +222,7 @@ static unsigned int send_message(pcb_t *dest, unsigned int payload,
 
 /*
  * Sends a message to the SSI (System Service Interface) with the specified
- * payload without causing a SYSCAll
+ * payload without causing a SYSCALL
  */
 void send_message_to_ssi(unsigned int payload)
 {
