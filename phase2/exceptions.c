@@ -148,9 +148,11 @@ static void deliver_message(state_t *p, msg_t *msg)
 
 	p->reg_a0 = (unsigned int)tmp_sender;
 
-	// If SYS2 need to receive a payload, the address in which the payload
-	// must be saved is in reg_a2. If SYS2 does not need to receive any
-	// payload, reg_a2 is set to NULL
+        /*
+	 * If SYS2 need to receive a payload, the address in which the payload
+	 * must be saved is in reg_a2. If SYS2 does not need to receive any
+	 * payload, reg_a2 is set to NULL
+	 */
 	memaddr *payload_destination = (memaddr *)p->reg_a2;
 	// Check if the payload_destination is not NULL
 	if (payload_destination) {
