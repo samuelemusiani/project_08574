@@ -139,7 +139,7 @@ static void blockSys()
  */
 static void deliver_message(state_t *p, msg_t *msg)
 {
-	// When returning form SYS2 the the return value (sender of msg)
+	// When returning form SYS2, the return value (sender of msg)
 	// need to be saved in the reg_a0
 	p->reg_a0 = (unsigned int)msg->m_sender;
 	pcb_t *tmp_sender = msg->m_sender;
