@@ -134,7 +134,7 @@ static void blockSys()
 }
 
 /*
- * Takes a process state and a message and delivers the message to the process
+ * Takes a process state and a message and delivers the message to the process,
  * saving the sender and the payload in the respective registers
  */
 static void deliver_message(state_t *p, msg_t *msg)
