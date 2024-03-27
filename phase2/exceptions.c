@@ -187,7 +187,7 @@ static unsigned int send_message(pcb_t *dest, unsigned int payload,
 	 * evaluation of is_a_softblocking_request() because we can't
 	 * dereference the payload if sent by the interrupt_handler.
 	 */
-	if (dest == ssi_pcb && sender != (pcb_t *)INTERRUPT_HANDLER_MSG &&
+	if (dest == ssi_pcb_real && sender != (pcb_t *)INTERRUPT_HANDLER_MSG &&
 	    is_a_softblocking_request((ssi_payload_t *)payload)) {
 		current_process->do_io = 1;
 	}
