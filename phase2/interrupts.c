@@ -10,10 +10,10 @@ static void it_interrupt_handler();
 static void device_interrupt_handler(unsigned int iln);
 
 /*
- * Handles interrupts by checking the interrupt priority and 
+ * Handles interrupts by checking the interrupt priority and
  * calling the corresponding interrupt handler functions.
- * We can only handle one interrupt at a time, the one with the highest 
- * priority. 
+ * We can only handle one interrupt at a time, the one with the highest
+ * priority.
  */
 void interrupt_handler()
 {
@@ -34,8 +34,9 @@ void interrupt_handler()
 			mip &= ~(1 << IL_CPUTIMER);
 			plt_interrupt_handler();
 		} else {
-			// For devices the interrupt with the highest priority is the
-			// lowest device number with the lowest interrupt line number.
+			// For devices the interrupt with the highest priority
+			// is the lowest device number with the lowest interrupt
+			// line number.
 			int iln = DEV_IL_START;
 			int max_il = DEV_IL_START + N_EXT_IL;
 			while (iln < max_il && !(mip & 1 << iln)) {
@@ -62,9 +63,10 @@ void interrupt_handler()
 static void device_interrupt_handler(unsigned int iln)
 {
 	/*
-	 * CDEV_BITMAP_ADDR(IntlineNo) is the address of the interrupting devices 
-     * bitmap. 8 bit, each bit represents a device. We need the device with the 
-     * lower number that has 1 on the bit corresponding to it.
+	 * CDEV_BITMAP_ADDR(IntlineNo) is the address of the interrupting
+	 * devices bitmap. 8 bit, each bit represents a device. We need the
+	 * device with the lower number that has 1 on the bit corresponding to
+	 * it.
 	 */
 	int bitmap = *(char *)CDEV_BITMAP_ADDR(iln);
 	int dev_n = 0;
@@ -110,19 +112,16 @@ static void device_interrupt_handler(unsigned int iln)
 	}
 
 	interrupt_handler_io_msg_t msg = {
-		.fields.service = 0, // doio
+		.fields.service = 0,			 // doio
 		.fields.device_type = EXT_IL_INDEX(iln), // type of device
-		.fields.device_number = dev_n, // number of device
-		.fields.status = statusCode // device's status
-	}; 
-	
-	
+		.fields.device_number = dev_n,		 // number of device
+		.fields.status = statusCode		 // device's status
+	};
+
 	if (device_is_terminal) {
 		msg.fields.device_number |=
 			terminal_transm ? SUBTERMINAL_TRANSM : SUBTERMINAL_RECV;
 	}
-
-
 
 	/*
 	 * Send a message to the ssi with the status code; it will be its job

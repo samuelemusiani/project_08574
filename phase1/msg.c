@@ -13,7 +13,7 @@ void freeMsg(msg_t *m)
 	setSTATUS(status);
 }
 
-/* 
+/*
  * Return NULL if the msgFree list is empty. Otherwise, remove an element from
  * the msgFree list, provide initial values for ALL of the messages fields and
  * then return a pointer to the removed element. Messages get reused, so it is
@@ -39,7 +39,7 @@ msg_t *allocMsg()
 	return tmp;
 }
 
-/* 
+/*
  * Initialize the msgFree list to contain all the elements of the static array
  * of MAXMESSAGES messages. This method will be called only once during data
  * structure initialization.
@@ -53,7 +53,7 @@ void initMsgs()
 	setSTATUS(status);
 }
 
-/* 
+/*
  * Used to initialize a variable to be head pointer to a message queue; returns
  * a pointer to the head of an empty message queue.
  */
@@ -78,7 +78,7 @@ int emptyMessageQ(struct list_head *head)
 	return a;
 }
 
-/* 
+/*
  * Insert the message pointed to by m at the end (tail) of the queue whose head
  * pointer is pointed to by head.
  */
@@ -102,7 +102,7 @@ void pushMessage(struct list_head *head, msg_t *m)
 	setSTATUS(status);
 }
 
-/* 
+/*
  * Remove the first element (starting by the head) from the message queue
  * accessed via head whose sender is p_ptr. If p_ptr is NULL, return the first
  * message in the queue. Return NULL if the message queue was empty or if no
@@ -139,7 +139,7 @@ msg_t *popMessage(struct list_head *head, pcb_t *p_ptr)
 	return NULL;
 }
 
-/* 
+/*
  * Return a pointer to the first message from the queue whose head is pointed
  * to by head. Do not remove the message from the queue. Return NULL if the
  * queue is empty.
@@ -158,10 +158,10 @@ msg_t *headMessage(struct list_head *head)
 	return a;
 }
 
-/* 
- * Search the first element from the message queue accessed via head whose sender is p_ptr.
- * Return 0 if p_ptr is NULL or the message queue was empty or if no message from p ptr was found;
- * otherwise return 1.
+/*
+ * Search the first element from the message queue accessed via head whose
+ * sender is p_ptr. Return 0 if p_ptr is NULL or the message queue was empty or
+ * if no message from p ptr was found; otherwise return 1.
  */
 int searchMsg(struct list_head *head, pcb_t *p_ptr)
 {

@@ -55,7 +55,8 @@ void exception_handler()
 
 /*
  * Handles system calls
- * It determines the type of syscall based on the value of reg_a0 (-1 = SENDMESSAGE, -2 = RECEIVEMESSAGE)
+ * It determines the type of syscall based on the value of reg_a0 (-1 =
+ * SENDMESSAGE, -2 = RECEIVEMESSAGE)
  */
 static void syscall_handler()
 {
@@ -147,9 +148,9 @@ static void deliver_message(state_t *p, msg_t *msg)
 
 	p->reg_a0 = (unsigned int)tmp_sender;
 
-	// If SYS2 need to receive a payload, the address in which the payload must
-	// be saved is in reg_a2. If SYS2 does not need to receive any payload,
-	// reg_a2 is set to NULL
+	// If SYS2 need to receive a payload, the address in which the payload
+	// must be saved is in reg_a2. If SYS2 does not need to receive any
+	// payload, reg_a2 is set to NULL
 	memaddr *payload_destination = (memaddr *)p->reg_a2;
 	// Check if the payload_destination is not NULL
 	if (payload_destination) {
@@ -179,10 +180,10 @@ static unsigned int send_message(pcb_t *dest, unsigned int payload,
 	msg->m_payload = payload;
 	msg->m_sender = sender == ssi_pcb_real ? SSI_FAKE_ADDR : sender;
 
-	/* 
+	/*
 	 * We need to check if the sender is the interrupt_handler before the
-	 * evaluation of is_a_softblocking_request() because we can't dereference the
-	 * payload if sent by the interrupt_handler.
+	 * evaluation of is_a_softblocking_request() because we can't
+	 * dereference the payload if sent by the interrupt_handler.
 	 */
 	if (dest == ssi_pcb && sender != (pcb_t *)INTERRUPT_HANDLER_MSG &&
 	    is_a_softblocking_request((ssi_payload_t *)payload)) {
@@ -190,12 +191,12 @@ static unsigned int send_message(pcb_t *dest, unsigned int payload,
 	}
 
 	/*
-	 * If the destination process is not in the ready queue and is blocked 
+	 * If the destination process is not in the ready queue and is blocked
 	 * waiting for a message from the sender,
- 	 * the function inserts the destination process into the ready queue, 
+	 * the function inserts the destination process into the ready queue,
 	 * updates the do_io flag if necessary, and delivers
- 	 * the message to the destination process.
-	*/
+	 * the message to the destination process.
+	 */
 	if (!searchPcb(&ready_queue, dest) && dest != current_process &&
 	    is_waiting_for_me(sender, dest)) {
 		// if dest is not in the ready queue,
@@ -218,8 +219,8 @@ static unsigned int send_message(pcb_t *dest, unsigned int payload,
 }
 
 /*
- * Sends a message to the SSI (System Service Interface) with the specified payload
- * without causing a SYSCAll
+ * Sends a message to the SSI (System Service Interface) with the specified
+ * payload without causing a SYSCAll
  */
 void send_message_to_ssi(unsigned int payload)
 {
@@ -240,7 +241,7 @@ static void tlb_handler()
 
 /*
  * Passes up an exception or terminates the current process.
- * 
+ *
  * If the current process does not have a support structure, it is terminated
  * and the scheduler is called. Otherwise, we pass up the exception handling
  * to the support structure.

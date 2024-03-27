@@ -17,7 +17,7 @@ extern cpu_t tod_timer;
 extern struct list_head ready_queue;
 extern pcb_t *current_process;
 
-/* 
+/*
  * uriscv supports five different classes of external devices: disk, tape,
  * network card, printer, and terminal. Furthermore, μRISCV can support up to
  * eight instances of each device type.

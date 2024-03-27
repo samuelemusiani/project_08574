@@ -4,8 +4,9 @@
 #include <uriscv/arch.h>
 
 /*
- * This function terminates the specified process and all its progeny. It removes the process from the ready queue,
- * updates the process count and soft block count, and frees the process control block (PCB) memory.
+ * This function terminates the specified process and all its progeny. It
+ * removes the process from the ready queue, updates the process count and soft
+ * block count, and frees the process control block (PCB) memory.
  */
 void terminate_process(pcb_t *p)
 {
@@ -21,11 +22,11 @@ void terminate_process(pcb_t *p)
 
 	process_count--;
 
-	/* 
-	 * There is a small case in which the process have do_io set to 1 but is not
-	 * waiting yet (between a SEND and a RECEIVE). Because it is not waiting, the
-	 * softblock_count is not really incremented. We should check if this process
-	 * has already entered the blocked state.
+	/*
+	 * There is a small case in which the process have do_io set to 1 but is
+	 * not waiting yet (between a SEND and a RECEIVE). Because it is not
+	 * waiting, the softblock_count is not really incremented. We should
+	 * check if this process has already entered the blocked state.
 	 */
 	softblock_count -= p->do_io;
 
@@ -47,12 +48,11 @@ void *memcpy(void *dest, const void *src, unsigned int len)
 	return dest;
 }
 
-
 /*
- * Processes blocked for IO are stored in an array of queues. 
+ * Processes blocked for IO are stored in an array of queues.
  * This function is used to map a device type and a device number to a number in
  * [0,MAXDEVICE] in order to store the PCB in the pcb_blocked_on_device[] array.
- * Device type: type = [0..4] 
+ * Device type: type = [0..4]
  * Interrupt line: number = [0..7]
  */
 int hash_from_device_type_number(int type, int number, int transm)
@@ -64,9 +64,9 @@ int hash_from_device_type_number(int type, int number, int transm)
 }
 
 /*
- * This functions maps a memaddr to a number in [0,MAXDEVICE] in order to map the
- * command for a device to a position in the pcb_blocked_on_device[] array.
- */ 
+ * This functions maps a memaddr to a number in [0,MAXDEVICE] in order to map
+ * the command for a device to a position in the pcb_blocked_on_device[] array.
+ */
 int comm_add_to_number(memaddr command_addr)
 {
 	int tmp = ((command_addr - (command_addr % 4)) - DEV_REG_START) /

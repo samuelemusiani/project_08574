@@ -2,15 +2,13 @@
 #include <uriscv/liburiscv.h>
 
 /*
- * Every function that manipulates the PCBs must be executed with interrupts disabled.
- * In fact, we set: 
- * START:
- * unsigned int status = getSTATUS(); 
+ * Every function that manipulates the PCBs must be executed with interrupts
+ * disabled. In fact, we set: START: unsigned int status = getSTATUS();
  * setSTATUS(status & ~(1 << 3));
- * 
+ *
  * END:
  * setSTATUS(status);
-*/
+ */
 
 pcb_t pcbTable[MAXPROC]; /* PCB array with maximum size 'MAXPROC' */
 LIST_HEAD(pcbFree_h);	 /* List of free PCBs                     */
@@ -31,7 +29,7 @@ void freePcb(pcb_t *p)
  * NULL and/or 0) and then return a pointer to the removed element. PCBs get
  * reused, so it is important that no previous value persist in a PCB when it
  * gets reallocated
-*/
+ */
 pcb_t *allocPcb()
 {
 	unsigned int status = getSTATUS();
@@ -71,7 +69,7 @@ pcb_t *allocPcb()
 	return p;
 }
 
-/* 
+/*
  * Initialize the pcbFree list to contain all the elements of the static array
  * of MAXPROC PCBs. This method will be called only once during data structure
  * initialization.
@@ -88,7 +86,7 @@ void initPcbs()
 /*
  * This method is used to initialize a variable to be head pointer to a process
  * queue.
- */ 
+ */
 void mkEmptyProcQ(struct list_head *head)
 {
 	unsigned int status = getSTATUS();
@@ -100,7 +98,7 @@ void mkEmptyProcQ(struct list_head *head)
 /*
  * Return TRUE if the queue whose head is pointed to by head is empty. Return
  * FALSE otherwise.
- */ 
+ */
 int emptyProcQ(struct list_head *head)
 {
 	unsigned int status = getSTATUS();
@@ -134,7 +132,7 @@ void insertProcQForIO(struct list_head *head, pcb_t *p)
  * Return a pointer to the first PCB from the process queue whose head is
  * pointed to by head. Do not remove this PCB from the process queue. Return
  * NULL if the process queue is empty.
- */ 
+ */
 pcb_t *headProcQ(struct list_head *head)
 {
 	unsigned int status = getSTATUS();
@@ -161,11 +159,11 @@ pcb_t *headProcQForIO(struct list_head *head)
 	return a;
 }
 
-/* 
+/*
  * Remove the first (i.e. head) element from the process queue whose head
  * pointer is pointed to by head. Return NULL if the process queue was
  * initially empty; otherwise return the pointer to the removed element.
- */ 
+ */
 pcb_t *removeProcQ(struct list_head *head)
 {
 	unsigned int status = getSTATUS();
@@ -240,7 +238,7 @@ pcb_t *outProcQForIO(struct list_head *head, pcb_t *p)
 	return a;
 }
 
-/* 
+/*
  * Return TRUE if the PCB pointed to by p has no children. Return FALSE
  * otherwise.
  */
@@ -278,7 +276,7 @@ pcb_t *removeChild(pcb_t *p)
 	return a;
 }
 
-/* 
+/*
  * Make the PCB pointed to by p no longer the child of its parent. If the PCB
  * pointed to by p has no parent, return NULL; otherwise, return p. Note that
  * the element pointed to by p could be in an arbitrary position (i.e. not be

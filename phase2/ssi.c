@@ -110,7 +110,8 @@ void ssi()
 	}
 }
 
-// Creates a new process (child of the sender process) and inserts it in the ready queue.
+// Creates a new process (child of the sender process) and inserts it in the
+// ready queue.
 pcb_t *create_process(pcb_t *sender, ssi_create_process_t *p)
 {
 	pcb_t *new_p = allocPcb();
@@ -160,7 +161,8 @@ static void wait_for_clock(pcb_t *p)
 	insertProcQForIO(&pcb_blocked_on_clock, p);
 }
 
-// Return a pointer to the support data associated with a given process control block (PCB).
+// Return a pointer to the support data associated with a given process control
+// block (PCB).
 static support_t *get_support_data(pcb_t *p)
 {
 	return p->p_supportStruct;
@@ -179,7 +181,7 @@ static int get_process_id(pcb_t *sender, void *arg)
 static void answer_do_io(int device_type, int device_number, int transm,
 			 int status)
 {
-	/* 
+	/*
 	 * If the interrupt handler sends me only the device type and
 	 * his number (so the position in the pcb_blocked_on_device array),
 	 * I can look up the pcb to send the message to and remove him from
