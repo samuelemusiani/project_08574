@@ -4,7 +4,7 @@
 static msg_t msgTable[MAXMESSAGES];
 LIST_HEAD(msgFree_h);
 
-// insert the element pointed to by m onto the msgFree list.
+// Insert the element pointed to by m onto the msgFree list.
 void freeMsg(msg_t *m)
 {
 	unsigned int status = getSTATUS();
@@ -13,11 +13,13 @@ void freeMsg(msg_t *m)
 	setSTATUS(status);
 }
 
-// return NULL if the msgFree list is empty. Otherwise, remove an element from
-// the msgFree list, provide initial values for ALL of the messages fields and
-// then return a pointer to the removed element. Messages get reused, so it is
-// important that no previous value persist in a message when it gets
-// reallocated.
+/*
+ * Return NULL if the msgFree list is empty. Otherwise, remove an element from
+ * the msgFree list, provide initial values for ALL of the messages fields and
+ * then return a pointer to the removed element. Messages get reused, so it is
+ * important that no previous value persist in a message when it gets
+ * reallocated.
+ */
 msg_t *allocMsg()
 {
 	unsigned int status = getSTATUS();
@@ -37,9 +39,11 @@ msg_t *allocMsg()
 	return tmp;
 }
 
-// initialize the msgFree list to contain all the elements of the static array
-// of MAXMESSAGES messages. This method will be called only once during data
-// structure initialization.
+/*
+ * Initialize the msgFree list to contain all the elements of the static array
+ * of MAXMESSAGES messages. This method will be called only once during data
+ * structure initialization.
+ */
 void initMsgs()
 {
 	unsigned int status = getSTATUS();
@@ -49,8 +53,10 @@ void initMsgs()
 	setSTATUS(status);
 }
 
-// used to initialize a variable to be head pointer to a message queue; returns
-// a pointer to the head of an empty message queue.
+/*
+ * Used to initialize a variable to be head pointer to a message queue; returns
+ * a pointer to the head of an empty message queue.
+ */
 void mkEmptyMessageQ(struct list_head *head)
 {
 	unsigned int status = getSTATUS();
@@ -59,8 +65,10 @@ void mkEmptyMessageQ(struct list_head *head)
 	setSTATUS(status);
 }
 
-// returns TRUE if the queue whose tail is pointed to by head is empty, FALSE
-// otherwise.
+/*
+ * Returns TRUE if the queue whose tail is pointed to by head is empty, FALSE
+ * otherwise.
+ */
 int emptyMessageQ(struct list_head *head)
 {
 	unsigned int status = getSTATUS();
@@ -70,8 +78,10 @@ int emptyMessageQ(struct list_head *head)
 	return a;
 }
 
-// insert the message pointed to by m at the end (tail) of the queue whose head
-// pointer is pointed to by head.
+/*
+ * Insert the message pointed to by m at the end (tail) of the queue whose head
+ * pointer is pointed to by head.
+ */
 void insertMessage(struct list_head *head, msg_t *m)
 {
 	unsigned int status = getSTATUS();
@@ -80,8 +90,10 @@ void insertMessage(struct list_head *head, msg_t *m)
 	setSTATUS(status);
 }
 
-//  insert the message pointed to by m at the head of the queue whose head
-//  pointer is pointed to by head
+/*
+ * Insert the message pointed to by m at the head of the queue whose head
+ * pointer is pointed to by head
+ */
 void pushMessage(struct list_head *head, msg_t *m)
 {
 	unsigned int status = getSTATUS();
@@ -90,11 +102,13 @@ void pushMessage(struct list_head *head, msg_t *m)
 	setSTATUS(status);
 }
 
-// remove the first element (starting by the head) from the message queue
-// accessed via head whose sender is p_ptr. If p_ptr is NULL, return the first
-// message in the queue. Return NULL if the message queue was empty or if no
-// message from p ptr was found; otherwise return the pointer to the removed
-// message.
+/*
+ * Remove the first element (starting by the head) from the message queue
+ * accessed via head whose sender is p_ptr. If p_ptr is NULL, return the first
+ * message in the queue. Return NULL if the message queue was empty or if no
+ * message from p ptr was found; otherwise return the pointer to the removed
+ * message.
+ */
 msg_t *popMessage(struct list_head *head, pcb_t *p_ptr)
 {
 	unsigned int status = getSTATUS();
@@ -125,9 +139,11 @@ msg_t *popMessage(struct list_head *head, pcb_t *p_ptr)
 	return NULL;
 }
 
-// return a pointer to the first message from the queue whose head is pointed
-// to by head. Do not remove the message from the queue. Return NULL if the
-// queue is empty.
+/*
+ * Return a pointer to the first message from the queue whose head is pointed
+ * to by head. Do not remove the message from the queue. Return NULL if the
+ * queue is empty.
+ */
 msg_t *headMessage(struct list_head *head)
 {
 	unsigned int status = getSTATUS();
@@ -142,9 +158,11 @@ msg_t *headMessage(struct list_head *head)
 	return a;
 }
 
-// search the first element from the message queue accessed via head whose
-// sender is p_ptr. Return 0 if p_ptr is NULL or the message queue was empty or
-// if no message from p ptr was found; otherwise return 1.
+/*
+ * Search the first element from the message queue accessed via head whose
+ * sender is p_ptr. Return 0 if p_ptr is NULL or the message queue was empty or
+ * if no message from p ptr was found; otherwise return 1.
+ */
 int searchMsg(struct list_head *head, pcb_t *p_ptr)
 {
 	unsigned int status = getSTATUS();

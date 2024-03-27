@@ -110,6 +110,8 @@ void ssi()
 	}
 }
 
+// Creates a new process (child of the sender process) and inserts it in the
+// ready queue.
 pcb_t *create_process(pcb_t *sender, ssi_create_process_t *p)
 {
 	pcb_t *new_p = allocPcb();
@@ -126,9 +128,12 @@ pcb_t *create_process(pcb_t *sender, ssi_create_process_t *p)
 	return new_p;
 }
 
+/*
+ * Terminates the process specified by `p`.
+ * If `p` is NULL, the process specified by `sender` is terminated.
+ */
 static void _terminate_process(pcb_t *sender, pcb_t *p)
 {
-	// If p does not exist or is not a process?
 	if (p == NULL)
 		terminate_process(sender);
 	else
@@ -144,16 +149,19 @@ static void do_io(pcb_t *sender, ssi_do_io_t *p)
 	*(p->commandAddr) = p->commandValue;
 }
 
+// Retrieves the CPU time of a given process.
 static cpu_t get_cpu_time(pcb_t *p)
 {
 	return p->p_time;
 }
 
+// Inserts the given process into the queue of processes blocked on the clock.
 static void wait_for_clock(pcb_t *p)
 {
 	insertProcQForIO(&pcb_blocked_on_clock, p);
 }
 
+// Given a pcb, returns a pointer to the associated support data
 static support_t *get_support_data(pcb_t *p)
 {
 	return p->p_supportStruct;
@@ -172,10 +180,12 @@ static int get_process_id(pcb_t *sender, void *arg)
 static void answer_do_io(int device_type, int device_number, int transm,
 			 int status)
 {
-	// If the interrupt handler sends me only the device type and
-	// his number (so the position in the pcb_blocked_on_device array),
-	// I can look up the pcb to send the message to and remove him from
-	// the list
+	/*
+	 * If the interrupt handler sends me only the device type and
+	 * his number (so the position in the pcb_blocked_on_device array),
+	 * I can look up the pcb to send the message to and remove him from
+	 * the list.
+	 */
 	int tmp = hash_from_device_type_number(device_type, device_number,
 					       transm);
 	pcb_t *dest = removeProcQForIO(&pcb_blocked_on_device[tmp]);
@@ -185,11 +195,13 @@ static void answer_do_io(int device_type, int device_number, int transm,
 static void answer_wait_for_clock()
 {
 	pcb_t *dest;
+	// Remove all the process waiting for clock and ack them
 	while ((dest = removeProcQForIO(&pcb_blocked_on_clock))) {
 		SYSCALL(SENDMESSAGE, (unsigned int)dest, 0, 0);
 	}
 }
 
+// Returns 1 if the given payload is a softblocking request, 0 otherwise.
 int is_a_softblocking_request(ssi_payload_t *p)
 {
 	return p->service_code == DOIO || p->service_code == CLOCKWAIT;
