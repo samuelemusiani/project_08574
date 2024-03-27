@@ -196,7 +196,7 @@ static unsigned int send_message(pcb_t *dest, unsigned int payload,
 	 * If the destination process is not in the ready queue and is blocked
 	 * waiting for a message from the sender,
 	 * the function inserts the destination process into the ready queue,
-	 * updates the do_io flag if necessary, and delivers
+	 * updates the do_io flag if necessary and delivers
 	 * the message to the destination process.
 	 */
 	if (!searchPcb(&ready_queue, dest) && dest != current_process &&
