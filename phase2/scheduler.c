@@ -15,8 +15,7 @@ void scheduler()
 	 * scheduler halts the system.
 	 */
 	if (process_count == 1 && !searchPcb(&ready_queue,
-					     ssi_pcb)) { // Change when make the
-							 // fake address
+					     ssi_pcb)) {
 		HALT();
 	}
 
