@@ -161,8 +161,7 @@ static void wait_for_clock(pcb_t *p)
 	insertProcQForIO(&pcb_blocked_on_clock, p);
 }
 
-// Return a pointer to the support data associated with a given process control
-// block (PCB).
+// Given a pcb, returns a pointer to the associated support data
 static support_t *get_support_data(pcb_t *p)
 {
 	return p->p_supportStruct;
