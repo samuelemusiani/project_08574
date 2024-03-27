@@ -32,7 +32,7 @@ void scheduler()
 		} else {
 			// If there are no soft blocked processes, the function
 			// panics and indicates a deadlock.
-			PANIC(); // DEADLOCK
+			PANIC();
 		}
 	}
 
