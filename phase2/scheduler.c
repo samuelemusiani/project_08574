@@ -21,8 +21,8 @@ void scheduler()
 
 	if (list_empty(&ready_queue)) {
 		/*
-		 * If there are soft blocked processes, the scheduler enable
-		 * interrupts and disable the PLT timer, then enter a wait
+		 * If there are soft blocked processes, the scheduler enables
+		 * interrupts and disables the PLT timer, then enter a wait
 		 * state.
 		 */
 		if (softblock_count > 0) {
