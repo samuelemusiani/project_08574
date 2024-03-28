@@ -81,7 +81,7 @@ static void device_interrupt_handler(unsigned int iln)
 
 	int device_is_terminal; // The interrupt is from a terminal
 	int terminal_transm;	// The interrupt is from a transm sub-terminal
-	if (iln == IL_TERMINAL) {
+	if (IL_TERMINAL <= iln && iln < IL_TERMINAL + DEVPERINT) {
 		device_is_terminal = 1;
 		/*
 		 * For the duration of the operation, the sub-device’s status is
@@ -115,16 +115,20 @@ static void device_interrupt_handler(unsigned int iln)
 	};
 
 	if (device_is_terminal) {
-		msg.fields.device_number |=
-			terminal_transm ? SUBTERMINAL_TRANSM : SUBTERMINAL_RECV;
+		// The following is a bug. I've reported the bug but for now
+		// it's not fixed.
+		// msg.fields.device_number |=
+		// 	terminal_transm ? SUBTERMINAL_TRANSM : SUBTERMINAL_RECV;
+		if (terminal_transm)
+			msg.fields.device_number |= SUBTERMINAL_TRANSM;
+		else
+			msg.fields.device_number |= SUBTERMINAL_RECV;
 	}
 
 	/*
 	 * Send a message to the ssi with the status code; it will be its job
 	 * to unblock the process
-	 */
-
-	/*
+	 *
 	 * Avoiding syscall because it would generate an exception and
 	 * ovveride the Nucleous stack memory.
 	 * The payload is not a pointer, but an unsigned int that stores all the
