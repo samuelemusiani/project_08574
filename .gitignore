@@ -65,7 +65,7 @@ term*.uriscv
 
 # Compression
 compress.sh
-phase1.tar.gz
+phase*.tar.gz
 
 # Sending
 send.sh
