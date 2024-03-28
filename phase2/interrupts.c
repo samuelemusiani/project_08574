@@ -66,6 +66,8 @@ static void device_interrupt_handler(unsigned int iln)
 	 */
 	int bitmap = *(char *)CDEV_BITMAP_ADDR(iln);
 	int dev_n = 0;
+	// The folling code is needed as the current version of uriscv have a
+	// bug on the instruction !(bitmap & (1 << dev_n))
 	int tmp1 = bitmap & (1 << dev_n);
 	int cond = !tmp1;
 	while (dev_n < N_DEV_PER_IL && cond) {
