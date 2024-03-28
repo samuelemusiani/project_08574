@@ -55,9 +55,11 @@ void interrupt_handler()
 	if (current_process == NULL)
 		scheduler();
 	// If there was a process running before the interrupt occured
-	else
+	else {
 		// Load the state of the process
+		STCK(tod_timer);
 		LDST((state_t *)BIOSDATAPAGE);
+	}
 }
 /*
  * This function handles device interrupts for a specific interrupt line.

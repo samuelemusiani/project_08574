@@ -35,6 +35,7 @@ void uTLB_RefillHandler()
  */
 void exception_handler()
 {
+	update_cpu_time();
 	unsigned int mcause = getCAUSE();
 	if (CAUSE_IS_INT(mcause)) { // Is interrupt
 		interrupt_handler();
@@ -89,6 +90,7 @@ static void syscall_handler()
 			// Increment PC to avoid sys loop
 			((state_t *)BIOSDATAPAGE)->pc_epc += 4;
 
+			STCK(tod_timer);
 			LDST(((state_t *)BIOSDATAPAGE));
 
 			break;
@@ -105,6 +107,8 @@ static void syscall_handler()
 					current_process->do_io = 0;
 				}
 				deliver_message((state_t *)BIOSDATAPAGE, msg);
+
+				STCK(tod_timer);
 				LDST(((state_t *)BIOSDATAPAGE));
 			} else {
 				// Block the process and call the scheduler
@@ -126,7 +130,6 @@ static void syscall_handler()
 static void blockSys()
 {
 	current_process->p_s = *((state_t *)BIOSDATAPAGE);
-	update_cpu_time();
 	if (current_process->do_io)
 		softblock_count++;
 	current_process = NULL;
