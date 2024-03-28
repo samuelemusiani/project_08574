@@ -2,8 +2,12 @@
 #include <uriscv/liburiscv.h>
 
 /*
- * Every function that manipulates the PCBs must be executed with interrupts
- * disabled. In fact, every function begins and ends in the same manner:
+ * Every function that manipulates a queue must be executed with interrupts
+ * disabled. This because both the ssi and the nucleus access the ready queue.
+ * If a PLT happend during the insert of a process in the ready queue by the
+ * ssi, the queue will be corrupted. So every function in this file have
+ * interrupt disabled. In fact, every function begins and ends in the same
+ * manner:
  * unsigned int status = getSTATUS();
  * setSTATUS(status & ~(1 << 3));
  * ...
@@ -146,6 +150,8 @@ pcb_t *headProcQ(struct list_head *head)
 	return a;
 }
 
+// This is a copy of headProcQ, but we operate on the p_io list of the pcb_t
+// struct
 pcb_t *headProcQForIO(struct list_head *head)
 {
 	unsigned int status = getSTATUS();
@@ -180,6 +186,8 @@ pcb_t *removeProcQ(struct list_head *head)
 	return tmp;
 }
 
+// This is a copy of removeProcQForIO, but we operate on the p_io list of
+// the pcb_t struct
 pcb_t *removeProcQForIO(struct list_head *head)
 {
 	unsigned int status = getSTATUS();
@@ -220,6 +228,8 @@ pcb_t *outProcQ(struct list_head *head, pcb_t *p)
 	return a;
 }
 
+// This is a copy of outProcQ, but we operate on the p_io list of the pcb_t
+// struct
 pcb_t *outProcQForIO(struct list_head *head, pcb_t *p)
 {
 	unsigned int status = getSTATUS();
@@ -315,15 +325,20 @@ int searchPcb(struct list_head *head, pcb_t *p)
 	return a;
 }
 
+/*
+ * The following fuction check if p is a valid pcb. p must be in the array
+ * pcbTable[], not in the pcbFree_h list and have a valid pointer inside the
+ * pcbTable[] array.
+ */
 int isPcbValid(pcb_t *p)
 {
 	unsigned int status = getSTATUS();
 	setSTATUS(status & ~(1 << 3));
-	int a = 1;
+	int is_valid = 1;
 	if (p < pcbTable || p > pcbTable + MAXPROC - 1 ||
 	    searchPcb(&pcbFree_h, p) ||
 	    ((int)p - (int)pcbTable) % sizeof(pcb_t) != 0)
-		a = 0;
+		is_valid = 0;
 	setSTATUS(status);
-	return a;
+	return is_valid;
 }
