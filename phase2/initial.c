@@ -20,14 +20,10 @@ struct list_head ready_queue; // Tail pointer ?
 // Pointer to the PCB that is in the “running” state
 pcb_t *current_process;
 
+// One list of blocked PCBs for each external (sub)device, plus one additional
+// list to support the Pseudo-clock
 struct list_head pcb_blocked_on_device[MAXDEVICE]; // Array of queues
 struct list_head pcb_blocked_on_clock;
-
-// Blocked PCBs: The Nucleus maintains one list of blocked PCBs for each
-// external (sub)device, plus one additional list to support the Pseudo-clock
-// [Section 8.3]. Since terminal devices are actually two independent
-// sub-devices, the Nucleus maintains two lists/pointers for each terminal
-// device [Section 5.7- pops].
 
 pcb_t *ssi_pcb;
 pcb_t *ssi_pcb_real;
@@ -42,7 +38,6 @@ int main(void)
 	passupvector->exception_stackPtr = (memaddr)KERNELSTACK;
 
 	// Initialize the Level 2 (Phase 1) data structures
-
 	initPcbs();
 	initMsgs();
 
