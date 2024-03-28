@@ -18,17 +18,24 @@ void terminate_process(pcb_t *p)
 
 	outChild(p);
 	outProcQ(&ready_queue, p);
-	outProcQForIO(&ready_queue, p);
+
+	int was_blocked = 0;
+	for (int i = 0; i < MAXDEVICE; i++) {
+		if (outProcQForIO(&pcb_blocked_on_device[i], p) == p)
+			was_blocked = 1;
+	}
+	if (outProcQ(&pcb_blocked_on_clock, p) == p)
+		was_blocked = 1;
 
 	process_count--;
 
 	/*
 	 * There is a small case in which the process have do_io set to 1 but is
 	 * not waiting yet (between a SEND and a RECEIVE). Because it is not
-	 * waiting, the softblock_count is not really incremented. We should
-	 * check if this process has already entered the blocked state.
+	 * waiting, the softblock_count is not really incremented.
 	 */
-	softblock_count -= p->do_io;
+	if (was_blocked)
+		softblock_count -= p->do_io;
 
 	// We should terminate all his progenesis
 	while (!emptyChild(p)) {
@@ -51,9 +58,13 @@ void *memcpy(void *dest, const void *src, unsigned int len)
 /*
  * Processes blocked for IO are stored in an array of queues.
  * This function is used to map a device type and a device number to a number in
- * [0,MAXDEVICE] in order to store the PCB in the pcb_blocked_on_device[] array.
+ * [0, MAXDEVICE] in order to store the PCB in the pcb_blocked_on_device[]
+ * array.
  * Device type: type = [0..4]
  * Interrupt line: number = [0..7]
+ *
+ * transm is used when the device is a terminal. If 1 it indicates that the
+ * subterminal is the transmittion one.
  */
 int hash_from_device_type_number(int type, int number, int transm)
 {
@@ -71,17 +82,16 @@ int comm_add_to_number(memaddr command_addr)
 {
 	int tmp = ((command_addr - (command_addr % 4)) - DEV_REG_START) /
 		  DEV_REG_SIZE;
-	int interrupt_line_number = tmp / 8; // Start from zero
-	int dev_number = tmp - interrupt_line_number * N_DEV_PER_IL;
+	// BUG: This should be tmp / 8. But il_number returns zero
+	int il_number = tmp / 8; // Start from zero
+	int dev_number = tmp - il_number * N_DEV_PER_IL;
 
 	int transm = 0;
 	if (dev_number == EXT_IL_INDEX(IL_TERMINAL)) {
-		transm = !!(command_addr -
-			    DEV_REG_ADDR(interrupt_line_number, dev_number));
+		transm = !!(command_addr - DEV_REG_ADDR(il_number, dev_number));
 	}
 
-	return hash_from_device_type_number(interrupt_line_number, dev_number,
-					    transm);
+	return hash_from_device_type_number(il_number, dev_number, transm);
 }
 
 // This function is used to update the cpu time of the current process
