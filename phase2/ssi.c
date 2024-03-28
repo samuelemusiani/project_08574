@@ -29,9 +29,9 @@ void ssi()
 			};
 			switch (msg.fields.service) {
 			case 0: {
-				answer_do_io(msg.fields.device_type &
+				answer_do_io(msg.fields.device_type,
+					     msg.fields.device_number &
 						     DEVICE_TYPE_MASK,
-					     msg.fields.device_number,
 					     msg.fields.device_type &
 						     SUBTERMINAL_TYPE,
 					     msg.fields.status);
@@ -189,7 +189,10 @@ static void answer_do_io(int device_type, int device_number, int transm,
 	int tmp = hash_from_device_type_number(device_type, device_number,
 					       transm);
 	pcb_t *dest = removeProcQForIO(&pcb_blocked_on_device[tmp]);
-	SYSCALL(SENDMESSAGE, (unsigned int)dest, status, 0);
+	// Send hack only if there is a process waiting. If the process was
+	// terminated do nothing
+	if (dest)
+		SYSCALL(SENDMESSAGE, (unsigned int)dest, status, 0);
 }
 
 static void answer_wait_for_clock()
