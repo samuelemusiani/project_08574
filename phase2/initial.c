@@ -11,7 +11,7 @@ unsigned int process_count;
 // The number of processes that are blocked on an I/O request
 unsigned int softblock_count;
 
-// Store the tod_timer
+// Store the tod_timer. This is used to track process execution time
 cpu_t tod_timer;
 
 // Tail pointer to a queue of PCBs that are in the “ready” state.
@@ -44,6 +44,7 @@ int main(void)
 	// Initialize all the previously declared variables;
 	process_count = 0;
 	softblock_count = 0;
+	tod_timer = 0;
 	INIT_LIST_HEAD(&ready_queue);
 	current_process = NULL;
 	for (int i = 0; i < MAXDEVICE; i++) {

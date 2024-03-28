@@ -90,9 +90,7 @@ static void syscall_handler()
 			// Increment PC to avoid sys loop
 			((state_t *)BIOSDATAPAGE)->pc_epc += 4;
 
-			STCK(tod_timer);
-			LDST(((state_t *)BIOSDATAPAGE));
-
+			scheduler();
 			break;
 		}
 		case RECEIVEMESSAGE: {
@@ -108,8 +106,7 @@ static void syscall_handler()
 				}
 				deliver_message((state_t *)BIOSDATAPAGE, msg);
 
-				STCK(tod_timer);
-				LDST(((state_t *)BIOSDATAPAGE));
+				scheduler();
 			} else {
 				// Block the process and call the scheduler
 				blockSys();
@@ -255,6 +252,7 @@ static void pass_up_or_die(int excp_value)
 {
 	if (current_process->p_supportStruct == NULL) {
 		terminate_process(current_process);
+		current_process = NULL;
 		scheduler();
 	} else {
 		current_process->p_supportStruct->sup_exceptState[excp_value] =

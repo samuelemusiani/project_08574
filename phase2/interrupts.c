@@ -51,15 +51,7 @@ void interrupt_handler()
 			device_interrupt_handler(iln);
 		}
 	}
-	// If the CPU was in WAIT state before the interrupt occured
-	if (current_process == NULL)
-		scheduler();
-	// If there was a process running before the interrupt occured
-	else {
-		// Load the state of the process
-		STCK(tod_timer);
-		LDST((state_t *)BIOSDATAPAGE);
-	}
+	scheduler();
 }
 /*
  * This function handles device interrupts for a specific interrupt line.
