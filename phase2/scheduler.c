@@ -46,15 +46,15 @@ void scheduler()
 	load_state(&current_process->p_s);
 }
 
-// The scheduler only select the process to dispatch, the actual load is done
-// by this function
+/*
+ * The scheduler only select the process to dispatch, the actual load is done
+ * by this function
+ */
 static void load_state(state_t *s)
 {
 	setTIMER(TIMESLICE * (*((cpu_t *)TIMESCALEADDR)));
 	// Get current TOD timer value and store in the global variable
 	// tod_timer
 	STCK(tod_timer);
-	// Perform a Load Processor State on the p_s stored in PCB of the
-	// current_process.
 	LDST(s);
 }

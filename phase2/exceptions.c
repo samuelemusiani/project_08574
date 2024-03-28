@@ -54,17 +54,14 @@ void exception_handler()
 	}
 }
 
-/*
- * Handles system calls
- * It determines the type of syscall based on the value of reg_a0 (-1 =
- * SENDMESSAGE, -2 = RECEIVEMESSAGE)
- */
 static void syscall_handler()
 {
 	if ((getCAUSE() & GETEXECCODE) == 8) {
-		// On uMPS3 we should generate fake trap with a reserverd code
-		// of PRIVINSTR that has value 10. In uRISCV this is not needed
-		// as a paricular code is used for SYS in user mode (8).
+		/*
+		 * On uMPS3 we should generate fake trap with a reserverd code
+		 * of PRIVINSTR that has value 10. In uRISCV this is not needed
+		 * as a paricular code is used for SYS in user mode (8).
+		 */
 		trap_handler();
 	} else {
 		switch (((state_t *)BIOSDATAPAGE)->reg_a0) {
@@ -121,7 +118,7 @@ static void syscall_handler()
 }
 
 /*
- * This function blocks the current process, update its cpu_t
+ * This function blocks the current process, update it's exection time
  * and calls the scheduler to select the next process to dispatch
  */
 static void blockSys()
@@ -171,7 +168,10 @@ static int is_waiting_for_me(pcb_t *sender, pcb_t *dest)
 	       dest->p_s.reg_a1 == ANYMESSAGE;
 }
 
-// This function sends a message to the specified destination process.
+/*
+ * This function sends a message to the specified destination process.
+ * If the process whas blocked on a SYS2 it will be unblocked.
+ */
 static unsigned int send_message(pcb_t *dest, unsigned int payload,
 				 pcb_t *sender)
 {
@@ -194,15 +194,14 @@ static unsigned int send_message(pcb_t *dest, unsigned int payload,
 
 	/*
 	 * If the destination process is not in the ready queue and is blocked
-	 * waiting for a message from the sender,
-	 * the function inserts the destination process into the ready queue,
-	 * updates the do_io flag if necessary and delivers
-	 * the message to the destination process.
+	 * waiting for a message from the sender, the function inserts the
+	 * destination process into the ready queue, updates the do_io flag if
+	 * necessary and delivers the message to the destination process.
 	 */
 	if (!searchPcb(&ready_queue, dest) && dest != current_process &&
 	    is_waiting_for_me(sender, dest)) {
-		// if dest is not in the ready queue,
-		// it means that it is blocked on a receive message
+		// if dest is not in the ready queue, it means that it is
+		// blocked on a receive message
 		insertProcQ(&ready_queue, ((pcb_t *)dest));
 
 		if (dest->do_io) {
@@ -211,7 +210,6 @@ static unsigned int send_message(pcb_t *dest, unsigned int payload,
 		}
 
 		deliver_message(&dest->p_s, msg);
-
 	} else {
 		insertMessage(&dest->msg_inbox, msg);
 	}
@@ -243,7 +241,6 @@ static void tlb_handler()
 
 /*
  * Passes up an exception or terminates the current process.
- *
  * If the current process does not have a support structure, it is terminated
  * and the scheduler is called. Otherwise, we pass up the exception handling
  * to the support structure.
