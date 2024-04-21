@@ -6,15 +6,16 @@
 #include "h/print.h"
 #include "h/types.h"
 
-int fib (int i) {
-	if ((i == 1) || (i ==2)) {
+int fib(int i)
+{
+	if ((i == 1) || (i == 2)) {
 		return (1);
 	}
-	return(fib(i-1)+fib(i-2));
+	return (fib(i - 1) + fib(i - 2));
 }
 
-
-void main() {
+void main()
+{
 	int i;
 	print(WRITETERMINAL, "Recursive Fibonacci (8) Test starts\n");
 	i = fib(8);
@@ -32,4 +33,3 @@ void main() {
 	SYSCALL(SENDMSG, PARENT, (unsigned int)&terminate_payload, 0);
 	SYSCALL(RECEIVEMSG, 0, 0, 0);
 }
-

@@ -2,11 +2,11 @@
 #define PRINTIT
 
 /************************** PRINT.H ******************************
-*
-*  Written by Mikeyg
-*/
+ *
+ *  Written by Mikeyg
+ */
 
-extern void print (int device, char *str);
+extern void print(int device, char *str);
 
 /***************************************************************/
 

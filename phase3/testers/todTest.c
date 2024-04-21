@@ -6,7 +6,8 @@
 #include "h/print.h"
 #include "h/types.h"
 
-void main() {
+void main()
+{
 	print(WRITETERMINAL, "TOD Test starts\n");
 	print(WRITETERMINAL, "TOD Test concluded\n");
 	ssi_payload_t tod_payload = {
@@ -32,4 +33,3 @@ void main() {
 	SYSCALL(SENDMSG, PARENT, (unsigned int)&terminate_payload, 0);
 	SYSCALL(RECEIVEMSG, 0, 0, 0);
 }
-

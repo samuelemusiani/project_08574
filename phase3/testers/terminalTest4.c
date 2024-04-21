@@ -6,7 +6,8 @@
 #include "h/print.h"
 #include "h/types.h"
 
-void main() {
+void main()
+{
 	print(WRITETERMINAL, "printTest is ok\n");
 	print(WRITETERMINAL, "Test number 4 is ok\n");
 	/* Terminate normally */
@@ -17,4 +18,3 @@ void main() {
 	SYSCALL(SENDMSG, PARENT, (unsigned int)&terminate_payload, 0);
 	SYSCALL(RECEIVEMSG, 0, 0, 0);
 }
-
