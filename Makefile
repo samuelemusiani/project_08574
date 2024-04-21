@@ -21,7 +21,10 @@ VPATH = $(URISCV_DATA_DIR)
 
 .PHONY : all clean
 
-all : kernel.core.uriscv
+all : kernel.core.uriscv testers
+
+testers:
+	$(MAKE) -C phase3/testers
 
 kernel.core.uriscv : kernel
 	uriscv-elf2uriscv -k $<
@@ -32,7 +35,8 @@ kernel : ./phase1/msg.o ./phase1/pcb.o crtso.o liburiscv.o \
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean :
-	-rm -f *.o ./phase1/*.o ./phase2/*.o kernel kernel.*.uriscv
+	-rm -f *.o ./phase1/*.o ./phase2/*.o kernel *.uriscv
+	$(MAKE) -C phase3/testers clean
 
 # Pattern rule for assembly modules
 %.o : %.S
