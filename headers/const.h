@@ -15,7 +15,7 @@
 
 /* Hardware & software constants */
 #define PAGESIZE 4096 /* page size in bytes	*/
-#define WORDLEN 4 /* word size in bytes	*/
+#define WORDLEN 4     /* word size in bytes	*/
 
 /* timer, timescale, TOD-LO and other bus regs */
 #define RAMBASEADDR 0x10000000
@@ -39,8 +39,8 @@
 
 /* Mikeyg Added constants */
 
-#define MAXPROC 40
-#define MAXMESSAGES 40
+#define MAXPROC 50
+#define MAXMESSAGES 50
 
 #define ANYMESSAGE 0
 #define MSGNOGOOD -1
@@ -91,7 +91,7 @@
 #define MSTATUS_MPP_MASK 0x1800
 
 /* Cause register constants */
-#define GETEXECCODE 0x7FFFFFFF
+#define GETEXECCODE 0x0000007C
 #define CLEAREXECCODE 0xFFFFFF00
 #define LOCALTIMERINT 0x00000200
 #define TIMERINTERRUPT 0x00000400
@@ -99,11 +99,13 @@
 #define FLASHINTERRUPT 0x00001000
 #define PRINTINTERRUPT 0x00004000
 #define TERMINTERRUPT 0x00008000
+#define IOINTERRUPTS 0
 #define TLBINVLDL 2
 #define TLBINVLDS 3
 #define SYSEXCEPTION 8
 #define BREAKEXCEPTION 9
 #define PRIVINSTR 10
+#define CAUSESHIFT 2
 
 /* EntryLO register (NDVG) constants */
 #define DIRTYON 0x00000400
@@ -116,6 +118,14 @@
 #define VPNSHIFT 12
 #define ASIDSHIFT 6
 #define SHAREDSEGFLAG 30
+
+#define SENDMSG 1
+#define RECEIVEMSG 2
+
+#define GET_TOD 1
+#define TERMINATE 2
+#define WRITEPRINTER 3
+#define WRITETERMINAL 4
 
 /* Index register constants */
 #define PRESENTFLAG 0x80000000
@@ -133,7 +143,7 @@
 #define OKCHARTRANS 5
 #define TRANSMITCHAR 2
 #define RECEIVECHAR 2 // aggiunta comando di ricezione del carattere
-#define PRINTCHR 2 // aggiunta comando di stampa del carattere
+#define PRINTCHR 2    // aggiunta comando di stampa del carattere
 
 #define SEEKTOCYL 2
 #define DISKREAD 3
@@ -182,20 +192,25 @@
 
 /*
  * NOTE: Function coming from a 2012 project
- 
-* This function takes the CAUSE register (3.3 of pops) and reads the bits corresponding to IP
- * The "il_no" parameter represents all the possible devices we have. (file /umps3/umps/arch.h line 68)
- * So the function allows us to go and check for each device which of them is working.
+
+* This function takes the CAUSE register (3.3 of pops) and reads the bits
+corresponding to IP
+ * The "il_no" parameter represents all the possible devices we have. (file
+/umps3/umps/arch.h line 68)
+ * So the function allows us to go and check for each device which of them is
+working.
  * If a device is running CAUSE_IP_GET returns 1, 0 otherwise.
- * As requested by chapter 3.4 exception 0 we call the interrupt of the first device
+ * As requested by chapter 3.4 exception 0 we call the interrupt of the first
+device
  * that we find "on" / "running" / "of which we get 1 from this function"
 */
 #define CAUSE_IP_GET(cause, il_no) \
-	((cause) &                 \
-	 (1 << ((il_no) + 8))) // performs a bit shift based on the parameters
+	((cause) & (1 << ((il_no) + 8))) // performs a bit shift based on the
+					 // parameters
 
 #define NRSEMAPHORES 49 /* Numero semafori devices + pseudo clock */
-#define NSUPPSEM 48 /* Numero di semafori devices per il livello di supporto */
+#define NSUPPSEM 48 /* Numero di semafori devices per il livello di supporto \
+		     */
 
 #define DISKBACK 1
 #define FLASHBACK 0
@@ -212,11 +227,13 @@
 
 /* uRISCV macros for userful operations */
 // MPP bits of the status register. p.18 Tesi Gian + uRISCV guide
-// https://github.com/riscv/riscv-isa-manual/releases/download/Priv-v1.12/riscv-privileged-20211203.pdf p.130
+// https://github.com/riscv/riscv-isa-manual/releases/download/Priv-v1.12/riscv-privileged-20211203.pdf
+// p.130
 #define KERNELMODE (0b11 << MSTATUS_MPP_BIT)
 
 // MIE bit of the status register. P.18 Tesi Gian + uRISCV guide
-// https://github.com/riscv/riscv-isa-manual/releases/download/Priv-v1.12/riscv-privileged-20211203.pdf p.130
+// https://github.com/riscv/riscv-isa-manual/releases/download/Priv-v1.12/riscv-privileged-20211203.pdf
+// p.130
 #define INTERRUPTS_ENBALED (1 << MSTATUS_MPIE_BIT) // Not shure
 
 #endif
