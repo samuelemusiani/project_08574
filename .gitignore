@@ -59,9 +59,7 @@ dkms.conf
 
 # Riscv
 kernel
-kernel.core.uriscv
-kernel.stab.uriscv
-term*.uriscv
+*.uriscv
 
 # Compression
 compress.sh
