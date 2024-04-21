@@ -91,7 +91,7 @@
 #define MSTATUS_MPP_MASK 0x1800
 
 /* Cause register constants */
-#define GETEXECCODE 0x0000007C
+#define GETEXECCODE 0x7FFFFFFF
 #define CLEAREXECCODE 0xFFFFFF00
 #define LOCALTIMERINT 0x00000200
 #define TIMERINTERRUPT 0x00000400
@@ -209,8 +209,9 @@ device
 					 // parameters
 
 #define NRSEMAPHORES 49 /* Numero semafori devices + pseudo clock */
-#define NSUPPSEM 48 /* Numero di semafori devices per il livello di supporto \
-		     */
+#define NSUPPSEM                                                    \
+	48 /* Numero di semafori devices per il livello di supporto \
+	    */
 
 #define DISKBACK 1
 #define FLASHBACK 0
