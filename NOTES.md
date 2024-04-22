@@ -226,6 +226,84 @@ measuring intervals length. It's initialized at 0 at boot time and can't be
 written. It does not generate interrupts. In order to get its value there is
 the `STCK(T)` macro.
 
+
+# Memory
+
+All addresses are 32 bit
+
+The address space, both physical and logical, is divided into equal sized units
+of 4 KB each. Hence an address has two components; a 20-bit Frame Number
+(physical) or Page Number (logical), and a 12-bit Offset into the page.
+
+            31-12           11-0
+    | Frame/Page Number | Offset |
+
+
+- BIOS region: 0x00000000 - 0x20000000.
+- Installed RAM: 2-512 * 4Kb frames 0x20000000 - RAMTOP
+- Bus error: RAMTOP - 0xFFFFFFFF
+
+Since RAMTOP will fall between 0x2000.8000 to 0x2020.0000, RAMTOP is an 
+address in kseg1. We have RAMTOP equal to 0x2010.0000
+
+- Bios (kseg0): 0x00000000 - 0x20000000.
+Access to this region is limited to kernel-mode only. User-mode access to kseg0 
+will always raise an *Address Error Program Trap exception*. Access to any 
+undefined or inaccessible portions of the BIOS region will raise a Bus Error 
+Program Trap exception.[10]
+
+- kseg1 (0x2000.0000 - 0x4000.0000): This 0.5 GB section is designed to hold the 
+kernel/OS. Access to kseg1 is limited to kernel-mode only. User-mode access will 
+raise an Address Error Program Trap exception.
+
+All addresses in kseg1 below RAMTOP are exempt from virtual address
+translation: these logical kseg1 addresses are also their physical address.
+Addresses in kseg1 above RAMTOP can only be accessible through virtual
+address translation.
+
+- kseg2 (0x4000.0000 - 0x8000.0000): This 1 GB section is for use when
+implementing a sophisticated operating system. Access to kseg2 is limited to 
+kernel-mode only. User-mode access will raise an Address Error Program Trap 
+exception.
+
+- kuseg (0x8000.0000 - 0xFFFF.FFFF): This 2 GB section is for user programs. 
+Access to kuseg is possible from both the kernel-mode and user-mode processor 
+setting.
+The kuseg of one process is differentiated from another process’s kuseg by
+a unique 6-bit process identifier called the Address Space Identifier - ASID.
+The ASID is contained in the EntryHi register (EntryHi.ASID), which is
+part of a processor state.
+
+The TLB Floor Address is an address below which address translation is disabled 
+and the address is considered a physical address.
+
+TLB EntryHi:
+
+              31-12               11-6   5-0
+    | Virtual page number (VPN) | ASID |     |
+
+TLB EntryLow:
+
+              31-12           11  10  9   8  7-0
+    | Physical Frame Number | N | D | V | G |   |
+
+- VPN: his is simply the higher order 20-bits of a logical address.
+- ASID: The Address Space Identifier, a.k.a. process ID for this VPN.
+- PFN: The physical frame number where the VPN for the specified ASID can be 
+found in RAM.
+- N: Not used
+- D: Dirty bit: This bit is used to implement memory protection mechanisms.
+When set to zero (off) a write access to a location in the physical frame will
+cause a TLB-Modification exception to be raised. 
+- V: Valid bit: If set to 1 (on), this TLB entry is considered valid. A valid
+entry is one where the PFN actually holds the ASID/virtual page number
+pairing. If 0 (off), the indicated ASID/virtual page number pairing is not
+actually in the PFN and any access to this page will cause a TLB-Invalid
+exception to be raised. In practical terms, a TLB-Invalid exception is what
+is generically called a “page fault.
+- G: Not needed
+
+
 # References
 [1] https://www.cs.unibo.it/~renzo/doc/umps3/uMPS3princOfOperations.pdf p.24
 [2] https://github.com/riscv/riscv-isa-manual/releases/download/Priv-v1.12/riscv-privileged-20211203.pdf p.39
@@ -236,3 +314,4 @@ the `STCK(T)` macro.
 [7] https://www.cs.unibo.it/~renzo/doc/umps3/uMPS3princOfOperations.pdf p.23
 [8] https://www.cs.unibo.it/~renzo/doc/umps3/uMPS3princOfOperations.pdf p.75
 [8] https://www.cs.unibo.it/~renzo/doc/umps3/uMPS3princOfOperations.pdf p.37
+[10] https://www.cs.unibo.it/~renzo/doc/umps3/uMPS3princOfOperations.pdf p.61
