@@ -31,11 +31,12 @@ kernel.core.uriscv : kernel
 
 kernel : ./phase1/msg.o ./phase1/pcb.o crtso.o liburiscv.o \
 	./phase2/exceptions.o ./phase2/initial.o ./phase2/interrupts.o \
-	./phase2/scheduler.o ./phase2/ssi.o ./phase2/p2test.o ./phase2/utils.o
+	./phase2/scheduler.o ./phase2/ssi.o ./phase2/utils.o \
+	./phase3/initProc.o ./phase3/sysSupport.c ./phase3/sst.c ./phase3/vmSupport.c
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean :
-	-rm -f *.o ./phase1/*.o ./phase2/*.o kernel *.uriscv
+	-rm -f *.o ./phase1/*.o ./phase2/*.o ./phase3/*.o kernel *.uriscv
 	$(MAKE) -C phase3/testers clean
 
 # Pattern rule for assembly modules
