@@ -65,6 +65,10 @@ void test()
 					   // abilitati?
 
 	// mutexstate.mie = MIE_ALL;
+	mutex_pcb = create_process(&mutexstate);
+
+	// TODO: Launch a proc for every I/O device. This is optional and we can
+	// do it later
 
 	// Create 8 sst
 	state_t sst1state;
@@ -76,6 +80,9 @@ void test()
 
 	// Other 7...
 
-	mutex_pcb = create_process(&mutexstate);
+	// Wait for sst messages when terminated
+	for (int i = 0; i < 1 /* 8 */; i++) {
+		SYSCALL(RECEIVEMESSAGE, ANYMESSAGE, 0, 0);
+	}
 	terminate_process(SELF);
 }
