@@ -235,8 +235,8 @@ The address space, both physical and logical, is divided into equal sized units
 of 4 KB each. Hence an address has two components; a 20-bit Frame Number
 (physical) or Page Number (logical), and a 12-bit Offset into the page.
 
-            31-12           11-0
-    | Frame/Page Number | Offset |
+                                31-12          11-0
+                        | Frame/Page Number | Offset |
 
 
 - BIOS region: 0x00000000 - 0x20000000.
@@ -279,13 +279,13 @@ and the address is considered a physical address.
 
 TLB EntryHi:
 
-              31-12               11-6   5-0
-    | Virtual page number (VPN) | ASID |     |
+                          31-12                11-6     5-0
+                | Virtual page number (VPN) |  ASID  |       |
 
-TLB EntryLow:
+TLB EntryLo:
 
-              31-12           11  10  9   8  7-0
-    | Physical Frame Number | N | D | V | G |   |
+                          31-12           11  10  9   8   7-0
+                | Physical Frame Number | N | D | V | G |     |
 
 - VPN: his is simply the higher order 20-bits of a logical address.
 - ASID: The Address Space Identifier, a.k.a. process ID for this VPN.
