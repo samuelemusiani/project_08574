@@ -294,7 +294,8 @@ found in RAM.
 - N: Not used
 - D: Dirty bit: This bit is used to implement memory protection mechanisms.
 When set to zero (off) a write access to a location in the physical frame will
-cause a TLB-Modification exception to be raised. 
+cause a TLB-Modification exception to be raised. All Page Table entries (and 
+therefore all TLB entries) should be marked as dirty.
 - V: Valid bit: If set to 1 (on), this TLB entry is considered valid. A valid
 entry is one where the PFN actually holds the ASID/virtual page number
 pairing. If 0 (off), the indicated ASID/virtual page number pairing is not

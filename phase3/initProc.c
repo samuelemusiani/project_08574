@@ -50,7 +50,7 @@ static void mutex_proc()
 void test()
 {
 	// Init swap pool table
-	swap_pool = (swap_t *)FLASHPOOLSTART;
+	swap_pool = (swap_t *)FLASHPOOLSTART; // TODO: Find more precise value
 
 	for (int i = 0; i < SWAPPOOLDIM; i++) {
 		swap_pool[i].sw_asid = -1;
@@ -60,6 +60,10 @@ void test()
 	state_t mutexstate;
 	STST(&mutexstate);
 	mutexstate.reg_sp = mutexstate.reg_sp - QPAGE; // ???
+	// The mutex is for the Swap pool table, so if mutex process
+	// have virtual memory there could be some conflicts. We put the mutex
+	// process under the RAMTOP limit to avoid VM.
+	// QPAGE may be too small
 	mutexstate.pc_epc = (memaddr)mutex_proc;
 	mutexstate.status = MSTATUS_MPP_M; // ??? Forse or |=? Interrupt
 					   // abilitati?
@@ -76,6 +80,7 @@ void test()
 	sst1state.reg_sp = mutexstate.reg_sp - QPAGE; // ??
 	sst1state.pc_epc = (memaddr)sst;
 	sst1state.status |= MSTATUS_MPP_M | MSTATUS_MIE_BIT; // ???
+	// In order to use SYSCALLS SST need to be in kernel mode (?)
 	sst1state.mie = MIE_ALL;
 
 	// Other 7...
