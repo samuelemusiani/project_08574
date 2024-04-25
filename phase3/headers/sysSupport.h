@@ -11,4 +11,7 @@
 #include <uriscv/liburiscv.h>
 #include <uriscv/arch.h>
 
+void send_message_to_ssi(unsigned int payload);
+void exception_handler();
+
 #endif
