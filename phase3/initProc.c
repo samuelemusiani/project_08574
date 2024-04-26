@@ -1,10 +1,9 @@
 #include "headers/initProc.h"
 #include "headers/vmSupport.h"
 #include "headers/sst.h"
-#include <uriscv/liburiscv.h>
+#include "headers/utils3.h"
 
 #define QPAGE 1024
-#define SELF NULL
 
 extern pcb_t *ssi_pcb;
 
@@ -26,24 +25,6 @@ static pcb_t *create_process(state_t *s)
 	return p;
 }
 
-static void terminate_process(pcb_t *arg)
-{
-	ssi_payload_t term_process_payload = {
-		.service_code = TERMPROCESS,
-		.arg = (void *)arg,
-	};
-	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb,
-		(unsigned int)(&term_process_payload), 0);
-	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, 0, 0);
-}
-
-// Processo mutex
-static void mutex_proc()
-{
-	// TODO: Mutex process
-	terminate_process(SELF);
-}
-
 void test()
 {
 	initSwapStructs();
@@ -55,7 +36,7 @@ void test()
 	// The mutex is for the Swap pool table, so if mutex process
 	// have virtual memory there could be some conflicts. We put the mutex
 	// process under the RAMTOP limit to avoid VM.
-	// QPAGE may be too small
+	// QPAGE may be too small ?
 	mutexstate.pc_epc = (memaddr)mutex_proc;
 	mutexstate.status = MSTATUS_MPP_M; // ??? Forse or |=? Interrupt
 					   // abilitati?
@@ -81,5 +62,5 @@ void test()
 	for (int i = 0; i < 1 /* 8 */; i++) {
 		SYSCALL(RECEIVEMESSAGE, ANYMESSAGE, 0, 0);
 	}
-	terminate_process(SELF);
+	p_term(SELF);
 }
