@@ -48,13 +48,18 @@ void test()
 	// do it later
 
 	// Create 8 sst
-	state_t sst1state;
-	STST(&sst1state);
-	sst1state.reg_sp = mutexstate.reg_sp - QPAGE; // ??
-	sst1state.pc_epc = (memaddr)sst;
-	sst1state.status |= MSTATUS_MPP_M | MSTATUS_MIE_BIT; // ???
-	// In order to use SYSCALLS SST need to be in kernel mode (?)
-	sst1state.mie = MIE_ALL;
+	for (int i = 1; i <= 1 /* 8 */; i++) {
+		state_t tmpstate;
+		STST(&tmpstate);
+		tmpstate.reg_sp = mutexstate.reg_sp - QPAGE * i; // ??
+		tmpstate.pc_epc = (memaddr)sst;
+		tmpstate.status |= MSTATUS_MPP_M | MSTATUS_MIE_BIT; // ???
+		// In order to use SYSCALLS SST need to be in kernel mode (?)
+		tmpstate.mie = MIE_ALL;
+		tmpstate.entry_hi = i;
+
+		create_process(&tmpstate);
+	}
 
 	// Other 7...
 
