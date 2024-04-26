@@ -11,4 +11,6 @@
 #include <uriscv/liburiscv.h>
 #include <uriscv/arch.h>
 
+void sst();
+
 #endif

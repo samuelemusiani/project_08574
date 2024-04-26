@@ -32,7 +32,8 @@ kernel.core.uriscv : kernel
 kernel : ./phase1/msg.o ./phase1/pcb.o crtso.o liburiscv.o \
 	./phase2/exceptions.o ./phase2/initial.o ./phase2/interrupts.o \
 	./phase2/scheduler.o ./phase2/ssi.o ./phase2/utils.o \
-	./phase3/initProc.o ./phase3/sysSupport.o ./phase3/sst.o ./phase3/vmSupport.o
+	./phase3/initProc.o ./phase3/sysSupport.o ./phase3/sst.o \
+	./phase3/vmSupport.o ./phase3/utils3.o
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean :

@@ -1,5 +1,5 @@
-#ifndef VMSUPPORT_H_INCLUDED
-#define VMSUPPORT_H_INCLUDED
+#ifndef UTILS3_H_INCLUDED
+#define UTILS3_H_INCLUDED
 
 #include "../../headers/const.h"
 #include "../../headers/listx.h"
@@ -11,9 +11,8 @@
 #include <uriscv/liburiscv.h>
 #include <uriscv/arch.h>
 
-extern swap_t *swap_pool;
+#define SELF NULL
 
-void initSwapStructs();
-void mutex_proc();
+void p_term(pcb_t *arg);
 
 #endif
