@@ -11,4 +11,8 @@
 #include <uriscv/liburiscv.h>
 #include <uriscv/arch.h>
 
+swap_t *swap_pool;
+
+void initSwapStructs();
+
 #endif

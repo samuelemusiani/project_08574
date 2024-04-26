@@ -1,4 +1,5 @@
 #include "headers/initProc.h"
+#include "headers/vmSupport.h"
 #include "headers/sst.h"
 #include <uriscv/liburiscv.h>
 
@@ -8,8 +9,6 @@
 extern pcb_t *ssi_pcb;
 
 pcb_PTR mutex_pcb, sst1;
-
-swap_t *swap_pool;
 
 static pcb_t *create_process(state_t *s)
 {
@@ -47,12 +46,7 @@ static void mutex_proc()
 
 void test()
 {
-	// Init swap pool table
-	swap_pool = (swap_t *)FLASHPOOLSTART; // TODO: Find more precise value
-
-	for (int i = 0; i < POOLSIZE; i++) {
-		swap_pool[i].sw_asid = -1;
-	}
+	initSwapStructs();
 
 	// Init mutex process
 	state_t mutexstate;
