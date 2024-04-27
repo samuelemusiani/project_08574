@@ -58,7 +58,7 @@ void test()
 		tmpstate.mie = MIE_ALL;
 		tmpstate.entry_hi = i;
 
-		create_process(&tmpstate);
+		sst_pcbs[i - 1] = create_process(&tmpstate);
 	}
 
 	// Other 7...
