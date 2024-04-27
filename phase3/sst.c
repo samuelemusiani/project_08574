@@ -1,4 +1,5 @@
 #include "headers/sst.h"
+#include "headers/utils3.h"
 
 pcb_PTR sst_pcbs[UPROCMAX];
 
@@ -6,7 +7,7 @@ void sst()
 {
 	// The asid variable is used to identify which u-proc the current sst
 	// need to managed.
-	unsigned int asid = getENTRYHI();
+	unsigned int asid = GET_ASID;
 	asid++; // DELETE, need to compile :)
 
 	// SST create a child process that executes one of the test U-pr

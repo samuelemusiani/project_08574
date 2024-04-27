@@ -56,7 +56,7 @@ void test()
 		tmpstate.status |= MSTATUS_MPP_M | MSTATUS_MIE_BIT; // ???
 		// In order to use SYSCALLS SST need to be in kernel mode (?)
 		tmpstate.mie = MIE_ALL;
-		tmpstate.entry_hi = i;
+		tmpstate.entry_hi |= i << ASIDSHIFT;
 
 		sst_pcbs[i - 1] = create_process(&tmpstate);
 	}
