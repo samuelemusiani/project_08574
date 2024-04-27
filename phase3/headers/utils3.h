@@ -12,6 +12,7 @@
 #include <uriscv/arch.h>
 
 #define SELF NULL
+#define GET_ASID ((getENTRYHI() >> ASIDSHIFT) & 0x4f)
 
 void p_term(pcb_t *arg);
 

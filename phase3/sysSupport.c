@@ -1,4 +1,7 @@
 #include "headers/sysSupport.h"
+#include "headers/sst.h"
+#include "headers/utils3.h"
+#include <uriscv/liburiscv.h>
 #include <uriscv/types.h>
 
 static void syscall_handler(state_t *s);
@@ -6,90 +9,62 @@ static void trap_handler(state_t *s);
 
 void general_exception_handler()
 {
-	// update_cpu_time();
-
 	// get the old state from the support level struct
 	state_t *s = &current_process->p_supportStruct
 			      ->sup_exceptState[GENERALEXCEPT];
 	unsigned int excCode = s->cause;
 
-	if ((excCode <= 7) || (excCode > 11 && excCode < 24)) {
-		trap_handler(s);
-	} else if (excCode == 8) {
+	if (excCode == 8) {
 		syscall_handler(s);
 	} else {
-		// If we could not handle the exception, we panic
-		PANIC();
+		trap_handler(s);
 	}
 }
 
 static void trap_handler(state_t *s)
 {
-	// Still TODO
+	// TODO Release of the mutual exclusion on the SWAP Pool
+
+	// terminate process
+	p_term(current_process);
 }
 
 static void syscall_handler(state_t *s)
 {
 	switch (s->reg_a0) {
-	case SENDMESSAGE: {
+	case SENDMSG: {
 		pcb_t *dest = (pcb_t *)s->reg_a1;
 		unsigned int payload = s->reg_a2;
 
-		// CHECK IF I HAVE TO SEND MSG TO MY SST_PARENT
-		// (credo) SST should be in kernel-mode coz he has to 'talk'
-		// with SSI
-		/*if (dest == MY_SST_ADDRESS())
-			dest = sst_address;
-    */
-
-		unsigned int return_val = DEST_NOT_EXIST;
-
-		if (isPcbValid(dest)) {
-			// return_val = send_message(dest, payload,
-			// current_process);
+		// PARENT == 0
+		if (!dest) {
+			unsigned int asid = GET_ASID;
+			dest = sst_pcbs[asid - 1];
 		}
-		// Set return value
-		s->reg_a0 = return_val;
 
-		// Increment PC to avoid sys loop
-		s->pc_epc += 4;
+		s->reg_a0 =
+			SYSCALL(SENDMESSAGE, (unsigned int)dest, payload, 0);
 
-		scheduler();
 		break;
 	}
-	case RECEIVEMESSAGE: {
+	case RECEIVEMSG: {
 		pcb_t *sender = (pcb_t *)s->reg_a1;
 
-		msg_t *msg = popMessage(&current_process->msg_inbox, sender);
-
-		if (msg) { // Found message from sender
-			if (current_process->do_io) {
-				current_process->do_io = 0;
-			}
-			// deliver_message(s, msg);
-
-			scheduler();
-		} else {
-			// Block the process and call the scheduler
-			// blockSys();
+		// PARENT == 0
+		if (!sender) {
+			unsigned int asid = GET_ASID;
+			sender = sst_pcbs[asid - 1];
 		}
+
+		s->reg_a0 = SYSCALL(RECEIVEMESSAGE, (unsigned int)sender,
+				    s->reg_a2, 0);
+
 		break;
 	}
 	default:
 		PANIC();
 		break;
 	}
-}
-
-/*
- * This function blocks the current process, update it's exection time
- * and calls the scheduler to select the next process to dispatch
- */
-static void blockSys()
-{
-	current_process->p_s = *((state_t *)BIOSDATAPAGE);
-	if (current_process->do_io)
-		softblock_count++;
-	current_process = NULL;
-	scheduler();
+	s->pc_epc += 4;
+	LDST(s);
 }

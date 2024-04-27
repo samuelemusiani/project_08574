@@ -1,5 +1,7 @@
 #include "headers/sst.h"
 
+pcb_PTR sst_pcbs[UPROCMAX];
+
 void sst()
 {
 	// The asid variable is used to identify which u-proc the current sst

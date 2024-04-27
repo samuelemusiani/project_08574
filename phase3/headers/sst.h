@@ -12,5 +12,5 @@
 #include <uriscv/arch.h>
 
 void sst();
-
+extern pcb_PTR sst_pcbs[UPROCMAX];
 #endif
