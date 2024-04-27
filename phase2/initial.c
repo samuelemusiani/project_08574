@@ -28,6 +28,8 @@ struct list_head pcb_blocked_on_clock;
 pcb_t *ssi_pcb;
 pcb_t *ssi_pcb_real;
 
+pcb_t *test_pcb; // TODO: REMOVE THIS
+
 int main(void)
 {
 	// Populate the Process 0 Pass Up Vector
@@ -71,7 +73,7 @@ int main(void)
 	ssi_pcb = SSI_FAKE_ADDR;
 
 	// Instantiate the second process (test)
-	pcb_t *test_pcb = allocPcb();
+	test_pcb = allocPcb();
 	insertProcQ(&ready_queue, test_pcb);
 	process_count++;
 	// This process needs to have interrupts enabled and kernel-mode on
