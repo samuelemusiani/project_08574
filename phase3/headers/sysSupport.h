@@ -7,11 +7,10 @@
 
 #include "../../phase1/headers/pcb.h"
 #include "../../phase1/headers/msg.h"
-#include "../../phase2/headers/ssi.h"
-#include "../../phase2/headers/initial.h"
-#include "../../phase2/headers/scheduler.h"
 
 #include <uriscv/liburiscv.h>
+
+extern pcb_PTR ssi_pcb;
 
 void send_message_to_ssi(unsigned int payload);
 void general_exception_handler();

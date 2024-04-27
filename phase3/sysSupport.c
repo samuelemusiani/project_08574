@@ -10,8 +10,13 @@ static void trap_handler(state_t *s);
 void general_exception_handler()
 {
 	// get the old state from the support level struct
-	state_t *s = &current_process->p_supportStruct
-			      ->sup_exceptState[GENERALEXCEPT];
+
+	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, GETSUPPORTPTR, 0);
+	support_t *support;
+	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)&support,
+		0); // TODO: Check return code
+
+	state_t *s = &support->sup_exceptState[GENERALEXCEPT];
 	unsigned int excCode = s->cause;
 
 	if (excCode == 8) {
@@ -26,7 +31,7 @@ static void trap_handler(state_t *s)
 	// TODO Release of the mutual exclusion on the SWAP Pool
 
 	// terminate process
-	p_term(current_process);
+	p_term(SELF);
 }
 
 static void syscall_handler(state_t *s)
@@ -66,5 +71,5 @@ static void syscall_handler(state_t *s)
 		break;
 	}
 	s->pc_epc += 4;
-	LDST(s);
+	LDST(s); // TODO: Should we really do this?
 }

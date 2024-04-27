@@ -5,8 +5,6 @@
 
 #define QPAGE 1024
 
-extern pcb_t *ssi_pcb;
-
 pcb_PTR mutex_pcb, sst1;
 
 static pcb_t *create_process(state_t *s)
