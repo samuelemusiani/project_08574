@@ -7,22 +7,6 @@
 
 pcb_PTR mutex_pcb, sst1;
 
-static pcb_t *create_process(state_t *s)
-{
-	pcb_t *p;
-	ssi_create_process_t ssi_create_process = {
-		.state = s,
-		.support = NULL,
-	};
-	ssi_payload_t payload = {
-		.service_code = CREATEPROCESS,
-		.arg = &ssi_create_process,
-	};
-	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, (unsigned int)&payload, 0);
-	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&p), 0);
-	return p;
-}
-
 void test()
 {
 	initSwapStructs();
@@ -31,16 +15,16 @@ void test()
 	state_t mutexstate;
 	STST(&mutexstate);
 	mutexstate.reg_sp = mutexstate.reg_sp - QPAGE; // ???
-	// The mutex is for the Swap pool table, so if mutex process
-	// have virtual memory there could be some conflicts. We put the mutex
-	// process under the RAMTOP limit to avoid VM.
-	// QPAGE may be too small ?
+	// The mutex is for the Swap pool table, so if the mutex process has
+	// virtual memory there could be some conflicts.
+	// We put the mutex process under the RAMTOP limit to avoid VM.
+	// QPAGE may be too small?
 	mutexstate.pc_epc = (memaddr)mutex_proc;
 	mutexstate.status = MSTATUS_MPP_M; // ??? Forse or |=? Interrupt
 					   // abilitati?
 
 	// mutexstate.mie = MIE_ALL;
-	mutex_pcb = create_process(&mutexstate);
+	mutex_pcb = p_create(&mutexstate, NULL);
 
 	// TODO: Launch a proc for every I/O device. This is optional and we can
 	// do it later
@@ -52,11 +36,22 @@ void test()
 		tmpstate.reg_sp = mutexstate.reg_sp - QPAGE * i; // ??
 		tmpstate.pc_epc = (memaddr)sst;
 		tmpstate.status |= MSTATUS_MPP_M | MSTATUS_MIE_BIT; // ???
-		// In order to use SYSCALLS SST need to be in kernel mode (?)
+		// In order to use SYSCALLS, SST need to be in kernel mode (?)
 		tmpstate.mie = MIE_ALL;
 		tmpstate.entry_hi |= i << ASIDSHIFT;
 
-		sst_pcbs[i - 1] = create_process(&tmpstate);
+		/* ??? */
+		state_t *child_state;
+		support_t *support; // sia per sst che per processo figlio
+
+		// se gli ASID sono [1..8], gli indici di sst_pcbs possono
+		// essere ASID-1 ?
+		sst_pcbs[i - 1] = p_create(&tmpstate, support);
+		sst_child_t data = { .fields.state = (unsigned int)child_state,
+				     (unsigned int)support };
+
+		SYSCALL(SENDMESSAGE, (unsigned int)sst_pcbs[i - 1],
+			(unsigned int)&data, 0);
 	}
 
 	// Other 7...

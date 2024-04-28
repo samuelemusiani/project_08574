@@ -11,6 +11,8 @@
 #include <uriscv/liburiscv.h>
 #include <uriscv/arch.h>
 
+#include "sst.h"
+
 extern pcb_t *ssi_pcb;
 
 #endif

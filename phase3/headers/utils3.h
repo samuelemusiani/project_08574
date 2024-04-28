@@ -15,5 +15,5 @@
 #define GET_ASID ((getENTRYHI() >> ASIDSHIFT) & 0x4f)
 
 void p_term(pcb_t *arg);
-
+pcb_PTR p_create(state_t *state, support_t *support);
 #endif
