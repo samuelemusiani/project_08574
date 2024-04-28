@@ -138,6 +138,7 @@ void sst()
 			sst_print_t *term_payload = (sst_print_t *)payload->arg;
 			write(term_payload, asid, IL_TERMINAL);
 			SYSCALL(SENDMESSAGE, (unsigned int)child_pcb, 0, 0);
+			break;
 		}
 	}
 
