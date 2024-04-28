@@ -15,5 +15,6 @@ extern swap_t *swap_pool;
 
 void initSwapStructs();
 void mutex_proc();
+void tlb_handler();
 
 #endif

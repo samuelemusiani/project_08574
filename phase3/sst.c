@@ -2,8 +2,6 @@
 #include "headers/utils3.h"
 #include <uriscv/liburiscv.h>
 
-#define WRITESTATUSMASK 0xFF
-
 pcb_PTR sst_pcbs[UPROCMAX];
 
 extern pcb_PTR test_pcb; // WE SHOULD NOT DO THIS. I think the cleanest way is
@@ -95,22 +93,73 @@ static void write(sst_print_t *write_payload, unsigned int asid,
 
 void sst()
 {
+	// these two lines halt the system; TODO: remove
+	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, (unsigned int)test_pcb, 0);
+	p_term(SELF);
+
+	// get the support structure from the ssi. This is the same for the
+	// child process
+	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, GETSUPPORTPTR, 0);
+	support_t *support;
+	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)&support,
+		0);
+
 	// The asid variable is used to identify which u-proc the current sst
 	// need to manage
-	unsigned int data;
-	SYSCALL(RECEIVEMESSAGE, (unsigned int)test_pcb, (unsigned int)&data, 0);
-	sst_child_t args = { .payload = data };
-
 	int asid = GET_ASID;
-	// SST creates a child process that executes one of the U-proc testers
-	support_t *child_support = (support_t *)args.fields.support;
-	child_support->sup_asid = asid;
-	pcb_PTR child_pcb =
-		p_create((state_t *)args.fields.state, child_support);
 
+	// Load in ram the source code of the child process
+	// (flash device number [ASID])
+	devreg_t *base = (devreg_t *)DEV_REG_ADDR(IL_FLASH, asid - 1);
+	unsigned int *data0 = &(base->dtp.data0);
+	unsigned int *command = &(base->dtp.command);
+	unsigned int status;
+
+	// .text? .data? idk
+	// these lines will load the entire flash memory in RAM
+	ssi_do_io_t do_io = {
+		.commandAddr = data0,
+		.commandValue = 0x0, // TODO: find a valid RAM address
+				     // (specs 2.1 pag. 3)
+	};
+	ssi_payload_t payload = {
+		.service_code = DOIO,
+		.arg = &do_io,
+	};
+	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&payload),
+		0);
+	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&status),
+		0);
+
+	// is 32 the number of blocks in the flash memory?
+	for (int i = 0; i < 32; i++) {
+		do_io.commandAddr = command,
+		do_io.commandValue = i << 8 | READBLK;
+		SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb,
+			(unsigned int)(&payload), 0);
+		SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb,
+			(unsigned int)(&status), 0);
+		if (status != 1)
+			PANIC();
+	}
+
+	// SST creates a child process that executes one of the U-proc testers
 	// SST shares the same ASID and support structure with its child U-proc.
-	// I think it is initProc.c job to give the sst process the same
-	// asid and support structure as the child process
+
+	state_t child_state;
+	STST(&child_state);
+
+	// TODO: same as above, find valid RAM addresses
+	child_state.pc_epc = 0x0;
+	child_state.reg_sp = 0x0;
+
+	// not sure about this, I took the values from p2test's processes
+	child_state.status |= MSTATUS_MIE_MASK | MSTATUS_MPP_M;
+
+	child_state.mie = MIE_ALL;
+	child_state.entry_hi &= ~(ASIDMASK << ASIDSHIFT);
+	child_state.entry_hi |= asid << ASIDSHIFT;
+	pcb_PTR child_pcb = p_create(&child_state, support);
 
 	// After its child initialization, the SST will wait for service
 	// requests from its child process
@@ -121,11 +170,14 @@ void sst()
 		ssi_payload_t *payload = (ssi_payload_t *)payload_tmp;
 		switch (payload->service_code) {
 		case GET_TOD:
-			SYSCALL(SENDMESSAGE, (unsigned int)child_pcb,
-				child_pcb->p_time, 0);
+			unsigned int tod;
+			STCK(tod);
+			SYSCALL(SENDMESSAGE, (unsigned int)child_pcb, tod, 0);
 			break;
 		case TERMINATE:
 			p_term(child_pcb);
+			// TODO: DO NOT USE test_pcb
+			SYSCALL(SENDMESSAGE, (unsigned int)test_pcb, 0, 0);
 			p_term(SELF);
 			break;
 		case WRITEPRINTER:
@@ -141,8 +193,4 @@ void sst()
 			break;
 		}
 	}
-
-	// TODO: DO NOT USE test_pcb
-	SYSCALL(SENDMESSAGE, (unsigned int)test_pcb, 0, 0); // why?
-	p_term(SELF);
 }

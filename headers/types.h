@@ -34,6 +34,10 @@ typedef struct support_t {
 	context_t sup_exceptContext[2]; /* new contexts for passing up	*/
 	pteEntry_t sup_privatePgTbl[USERPGTBLSIZE]; /* user page table */
 	struct list_head s_list;
+
+	// TODO: remove
+	unsigned int sup_stackTLB[500];
+	unsigned int sup_stackGen[500];
 } support_t;
 
 /* Page swap pool information structure type */
