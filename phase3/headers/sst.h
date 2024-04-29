@@ -11,15 +11,6 @@
 #include <uriscv/liburiscv.h>
 #include <uriscv/arch.h>
 
-// ???
-typedef union sst_child_t {
-	struct {
-		unsigned int state;
-		unsigned int support;
-	} fields;
-	unsigned int payload;
-} sst_child_t;
-
 void sst();
 extern pcb_PTR sst_pcbs[UPROCMAX];
 #endif

@@ -13,7 +13,8 @@ static void write(sst_print_t *write_payload, unsigned int asid,
 		  unsigned int dev)
 {
 	// dev can only be IL_PRINTER or IL_TERMINAL
-	if (dev == IL_PRINTER) {
+	switch (dev) {
+	case IL_PRINTER:
 		// print a string of caracters to the printer
 		// with the same number of the sender ASID (-1)
 		int count = 0;
@@ -55,15 +56,15 @@ static void write(sst_print_t *write_payload, unsigned int asid,
 
 			count++;
 		}
-	} else if (dev == IL_TERMINAL) {
+		break;
+	case IL_TERMINAL:
 		// print a string of caracters to the terminal
 		// with the same number of the sender ASID (-1)
 
-		devreg_t *base = (devreg_t *)DEV_REG_ADDR(dev, asid - 1);
-		unsigned int *command = &(base->term.transm_command);
-		unsigned int status;
+		base = (devreg_t *)DEV_REG_ADDR(dev, asid - 1);
+		command = &(base->term.transm_command);
 
-		int count = 0;
+		count = 0;
 		while (write_payload->length > count) {
 			unsigned int value =
 				PRINTCHR |
@@ -87,16 +88,14 @@ static void write(sst_print_t *write_payload, unsigned int asid,
 
 			count++;
 		}
-	} else
+		break;
+	default:
 		PANIC();
+	}
 }
 
 void sst()
 {
-	// these two lines halt the system; TODO: remove
-	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, (unsigned int)test_pcb, 0);
-	p_term(SELF);
-
 	// get the support structure from the ssi. This is the same for the
 	// child process
 	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, GETSUPPORTPTR, 0);
@@ -106,7 +105,7 @@ void sst()
 
 	// The asid variable is used to identify which u-proc the current sst
 	// need to manage
-	int asid = GET_ASID;
+	int asid = support->sup_asid;
 
 	// Load in ram the source code of the child process
 	// (flash device number [ASID])
@@ -149,25 +148,21 @@ void sst()
 	state_t child_state;
 	STST(&child_state);
 
-	// TODO: same as above, find valid RAM addresses
-	child_state.pc_epc = 0x0;
-	child_state.reg_sp = 0x0;
+	child_state.pc_epc = 0x800000B0;
+	child_state.reg_sp = 0xC0000000;
 
 	// not sure about this, I took the values from p2test's processes
-	child_state.status |= MSTATUS_MIE_MASK | MSTATUS_MPP_M;
+	child_state.status |= MSTATUS_MIE_MASK | ~MSTATUS_MPP_M;
 
 	child_state.mie = MIE_ALL;
-	child_state.entry_hi &= ~(ASIDMASK << ASIDSHIFT);
-	child_state.entry_hi |= asid << ASIDSHIFT;
 	pcb_PTR child_pcb = p_create(&child_state, support);
 
 	// After its child initialization, the SST will wait for service
 	// requests from its child process
 	while (1) {
-		unsigned int payload_tmp;
+		ssi_payload_t *payload;
 		SYSCALL(RECEIVEMESSAGE, (unsigned int)child_pcb,
-			(unsigned int)&payload_tmp, 0);
-		ssi_payload_t *payload = (ssi_payload_t *)payload_tmp;
+			(unsigned int)&payload, 0);
 		switch (payload->service_code) {
 		case GET_TOD:
 			unsigned int tod;

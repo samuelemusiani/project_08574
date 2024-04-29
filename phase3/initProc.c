@@ -37,9 +37,6 @@ void test()
 		tmpstate.status |= MSTATUS_MPP_M | MSTATUS_MIE_BIT; // ???
 		// In order to use SYSCALLS, SST need to be in kernel mode (?)
 		tmpstate.mie = MIE_ALL;
-		tmpstate.entry_hi &= ~(ASIDMASK << ASIDSHIFT); // clear ASID
-							       // field
-		tmpstate.entry_hi |= i << ASIDSHIFT;
 
 		support_table[i - 1].sup_asid = i;
 		// PGFAULTEXCEPT
@@ -56,8 +53,9 @@ void test()
 		tmp.pc = (memaddr)general_exception_handler;
 		support_table[i - 1].sup_exceptContext[GENERALEXCEPT] = tmp;
 
+		support_table[i - 1].sup_asid = i;
+
 		sst_pcbs[i - 1] = p_create(&tmpstate, &support_table[i - 1]);
-		p_term(SELF);
 	}
 
 	// Other 7...
