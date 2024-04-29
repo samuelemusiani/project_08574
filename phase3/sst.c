@@ -152,7 +152,7 @@ void sst()
 	child_state.reg_sp = 0xC0000000;
 
 	// not sure about this, I took the values from p2test's processes
-	child_state.status |= MSTATUS_MIE_MASK | ~MSTATUS_MPP_M;
+	child_state.status |= MSTATUS_MIE_MASK & ~MSTATUS_MPP_M;
 
 	child_state.mie = MIE_ALL;
 	pcb_PTR child_pcb = p_create(&child_state, support);
