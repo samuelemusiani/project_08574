@@ -12,8 +12,16 @@
 #include <uriscv/arch.h>
 
 #define SELF NULL
-#define GET_ASID ((getENTRYHI() >> ASIDSHIFT) & 0x4f)
+#define QPAGE 1024
+
+#define ASIDMASK 0x40
+#define GET_ASID ((getENTRYHI() >> ASIDSHIFT) & ASIDMASK)
+
+#define WRITESTATUSMASK 0xFF
+
+#define READBLK 2
+#define WRITEBLK 3
 
 void p_term(pcb_t *arg);
-
+pcb_PTR p_create(state_t *state, support_t *support);
 #endif

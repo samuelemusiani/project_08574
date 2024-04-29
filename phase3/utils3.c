@@ -17,3 +17,19 @@ void p_term(pcb_t *arg)
 	 * The Nucleus will take care of countinuing the execution.
 	 */
 }
+
+pcb_PTR p_create(state_t *state, support_t *support)
+{
+	pcb_t *p;
+	ssi_create_process_t ssi_create_process = {
+		.state = state,
+		.support = support,
+	};
+	ssi_payload_t payload = {
+		.service_code = CREATEPROCESS,
+		.arg = &ssi_create_process,
+	};
+	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, (unsigned int)&payload, 0);
+	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&p), 0);
+	return p;
+}
