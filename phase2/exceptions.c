@@ -22,7 +22,7 @@ static int is_waiting_for_me(pcb_t *sender, pcb_t *dest);
 
 void uTLB_RefillHandler()
 {
-	unsigned int ehi = current_process->p_s->entry_hi;
+	unsigned int ehi = current_process->p_s.entry_hi;
 	int i = 0;
 	while  (i < MAXPAGES) {
 		if (ehi == current_process->p_supportStruct->sup_privatePgTbl[i]
