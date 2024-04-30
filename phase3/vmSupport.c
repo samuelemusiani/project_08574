@@ -22,9 +22,9 @@ typedef union mutex_payload_t {
 
 static size_tt getFrameIndex();
 static void read_write_flash(memaddr ram_address, unsigned int disk_block,
-		      unsigned int asid, int is_write);
+			     unsigned int asid, int is_write);
 static int isFrameFree(swap_t *frame);
-//static memaddr page_index_address(size_tt page_index);
+// static memaddr page_index_address(size_tt page_index);
 
 void initSwapStructs()
 {
@@ -41,8 +41,8 @@ void mutex_proc()
 {
 	mutex_payload_t p;
 	while (1) {
-		pcb_t *sender = (pcb_t*)SYSCALL(RECEIVEMESSAGE, ANYMESSAGE,
-					       (unsigned int)&p.payload, 0);
+		pcb_t *sender = (pcb_t *)SYSCALL(RECEIVEMESSAGE, ANYMESSAGE,
+						 (unsigned int)&p.payload, 0);
 		if (p.fields.p != 1)
 			continue;
 
@@ -120,8 +120,8 @@ void tlb_handler()
 		// marco la page table entry k del processo x come non valida
 		swap_pool_table[frame_i].sw_pte->pte_entryLO &= ~VALIDON;
 
-		// se la entry k del processo x è in TLB, cancello tutte le entry della
-		// TLB
+		// se la entry k del processo x è in TLB, cancello tutte le
+		// entry della TLB
 		TLBCLR();
 
 		// riabilito gli interrupt
@@ -134,10 +134,10 @@ void tlb_handler()
 
 	// disabilito gli interrupt
 
-
 	memaddr ram_addr = swap_pool_table[frame_i].sw_pte->pte_entryLO >> 12;
 
-	memaddr virtual_addr = swap_pool_table[frame_i].sw_pte->pte_entryHI >> VPNSHIFT;
+	memaddr virtual_addr = swap_pool_table[frame_i].sw_pte->pte_entryHI >>
+			       VPNSHIFT;
 	int disk_block = (virtual_addr - 0x800000B0) / PAGESIZE;
 
 	// Write the contents of frame i to the correct location on process x’s
@@ -152,7 +152,7 @@ void tlb_handler()
 	swap_pool_table[frame_i].sw_pageNo = missing_page;
 	swap_pool_table[frame_i].sw_pte = &s->sup_privatePgTbl[missing_page];
 
- 	status_IT = getSTATUS();
+	status_IT = getSTATUS();
 	setSTATUS(status_IT & ~(1 << 3));
 
 	s->sup_privatePgTbl[missing_page].pte_entryLO = ram_addr << 12 |
@@ -161,7 +161,6 @@ void tlb_handler()
 	TLBCLR();
 
 	setSTATUS(status_IT);
-
 
 	p.fields.p = 0;
 	p.fields.v = 1;
@@ -230,7 +229,7 @@ static size_tt getFrameIndex()
 }
 
 static void read_write_flash(memaddr ram_address, unsigned int disk_block,
-		      unsigned int asid, int is_write)
+			     unsigned int asid, int is_write)
 {
 	// Load in ram the source code of the child process
 	// (flash device number [ASID])

@@ -24,9 +24,9 @@ void uTLB_RefillHandler()
 {
 	unsigned int ehi = current_process->p_s.entry_hi;
 	int i = 0;
-	while  (i < MAXPAGES) {
+	while (i < MAXPAGES) {
 		if (ehi == current_process->p_supportStruct->sup_privatePgTbl[i]
-				    .pte_entryHI) {
+				   .pte_entryHI) {
 			break;
 		}
 		i++;
