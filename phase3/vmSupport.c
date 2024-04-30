@@ -3,7 +3,18 @@
 
 #define NOPROC -1
 
+extern pcb_t *ssi_pcb;
+
+// La swap pool table è un array di swap_t entries
+swap_t swap_pool_table[POOLSIZE];
+
 swap_t *swap_pool;
+union mutex_payload_t {
+	struct fields {
+		char p;
+		char v;
+	} unsigned int payload;
+}
 
 void initSwapStructs()
 {
@@ -11,145 +22,173 @@ void initSwapStructs()
 	swap_pool = (swap_t *)FLASHPOOLSTART; // TODO: Find more precise value
 
 	for (int i = 0; i < POOLSIZE; i++) {
-		swap_pool[i].sw_asid = NOPROC;
+		swap_pool_table[i].sw_asid = NOPROC;
 	}
-
-	swap_pool_mutex.asid = -1;
-	swap_pool_mutex.sem = 1;
 }
 
 // Processo mutex
 void mutex_proc()
 {
+	mutex_payload_t p;
+	while (1) {
+		pcb_t *sender = (pcb_t)SYSCALL(RECEIVEMESSAGE, ANYMESSAGE,
+					       (unsigned int)&p.payload, 0);
+		if (p.fields.p != 1)
+			continue;
+
+		SYSCALL(SENDMESSAGE, (unsigned int)sender, 0, 0);
+
+		do {
+			SYSCALL(RECEIVEMESSAGE, (unsigned int)sender,
+				(unsigned int)&p.payload, 0);
+		} while (p.fields.v != 1)
+
+			SYSCALL(SENDMESSAGE, (unsigned int)sender, 0, 0);
+	}
+
 	// TODO: Mutex process
 	p_term(SELF);
 }
 
 void tlb_handler()
 {
+	pager();
 }
 
-
-
-
-extern pcb_t *ssi_pcb;
-#define SWAP_POOL_SIZE (2*UPROCMAX)
-typedef struct support_mutex {
-  int sem; // value of the semaphore
-  int asid; // asid of the process that has the mutex
-} support_mutex;
-
-// La swap pool table è un array di swap_t entries
-swap_t swap_pool_table[SWAP_POOL_SIZE];
-
-
-support_mutex swap_pool_mutex;
-
-void pager(){
+void pager()
+{
 	// Devo mandare una SYSCALL a SSI per richieddere il getsupportdata
 	// Devo ricevere il messaggio da SSI
-	ssi_payload_t getsupportdata = {
-		.service_code = GETSUPPORTPTR
-	};
-	
-	
-	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&getsupportdata), 0);
-	support_t *s = (support_t *)SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, 0, 0);
+	ssi_payload_t getsupportdata = { .service_code = GETSUPPORTPTR,
+					 .arg = NULL };
 
-	// Se la causa è una TLB-Modification exception, deve considerare l'eccezione come program trap
-	// ovvero cause register ha excode 24
-	unsigned int tlbcause = s->sup_exceptState[PGFAULTEXCEPT].cause;
-	unsigned int excCode = tlbcause & GETEXECCODE;
+	support_t *s;
 
-	// è 24?? leggendo NOTES mi sembra di si 
-	if (excCode == 24) {
+	// richiedo il GETSUPPORTPTR
+	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb,
+		(unsigned int)(&getsupportdata), 0);
+	// ricevo il GETSUPPORTPTR
+	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&s), 0);
+
+	int asid = s->sup_asid;
+
+	// Se la causa è una TLB-Modification exception, deve considerare
+	// l'eccezione come program trap ovvero cause register ha excode 24
+
+	// TLB-MOD
+	if ((s->sup_exceptState[PGFAULTEXCEPT].cause & GETEXECCODE) == 24) {
 		// TLB-Modification exception is treated as a program trap
-		support_program_trap_handler();
+		trap_handler();
 	}
-	else { // Se la causa è una TLB-invalid
-	
+	// Se la causa è una TLB-invalid
 
-	// devo prendere la mutua esclusione sulla swap pool table mandando un messaggio allo swap mutex
-	// e ricevendo il messaggio di conferma
-	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, 0, 0);
+	// devo prendere la mutua esclusione sulla swap pool table mandando un
+	// messaggio allo swap mutex e ricevendo il messaggio di conferma
+	mutex_payload_t p = { .fields.p = 1 };
+	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, (unsigned int)&p.payload,
+		0);
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)mutex_pcb, 0, 0);
 
+	memaddr missing_page =
+		((s->sup_exceptState[PGFAULTEXCEPT].entry_hi >> VPNSHIFT) -
+		 0x800000B0) /
+		PAGESIZE;
+	// TODO: check stack pointer that is block 31. THIS ONLY WORK FOR BLOCK
+	// [0..30]
 
+	// scegliere un frame i di ram dallo swap pool (FIFO)
 
-	// Devo disabilitare gli interrupt
-	swap_pool_mutex.sem -= 1;
-	swap_pool_mutex.asid = 
-
-	unsigned int p = s->sup_exceptState[0].entry_hi;
-
-	// scegliere un frame i di ram dallo swap pool (FIFO) 
-
-	// se il frame i è occupato da una pagina logica k del processo x e la pagina k è dirty (modificata)
-	// allora
+	// se il frame i è occupato da una pagina logica k del processo x e la
+	// pagina k è dirty (modificata) allora
 	// 	- aggiorno la page table del processo x (in mutua esclusione)
-	//  - aggiorno la TLB, se la pagina k del processo x è in TLB (in mutua esclusione)
-	//  - scrivo il contenuto del frame i sulla posizione correta del flash device del processo x
+	//  - aggiorno la TLB, se la pagina k del processo x è in TLB (in mutua
+	//  esclusione)
+	//  - scrivo il contenuto del frame i sulla posizione correta del flash
+	//  device del processo x
 
-	// swap pool starting address is 0x20000000 + (32 * PAGESIZE)
-
-	static memaddr swap_pool = 0x20000000 + (32 * PAGESIZE);
-
-	if (swap_pool_table[i].sw_pte != NULL) {
-		
-		// controllo se la pagina è dirty
-		unsigned int dirty = swap_pool_table[i].sw_pte->pte_entryLO & DIRTYON;
-		if (dirty) {
-
-			// richiedo l'accesso in mutua esclusione alla swap pool table
-			SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, (unsigned int)(1), 0);
-			unsigned int ack = SYSCALL(RECEIVEMESSAGE, (unsigned int)mutex_pcb, 0, 0);
-
-			// marco la page table entry k del processo x come non valida
-			swap_pool_table[i].sw_pte->pte_entryLO = swap_pool_table[i].sw_pte->pte_entryLO & ~VALIDON;
-
-			// se la entry k del processo x è in TLB, cancello tutte le entry della TLB
-			TLBCLR();
-
-			// aggiorno la page table del processo x
-			unsigned int x = swap_pool_table[i].sw_pte->pte_entryHI & GETVPN;
-			unsigned int k = swap_pool_table[i].sw_pte->pte_entryLO & GETPFN;
-			unsigned int i = swap_pool_table[i].sw_pte->pte_entryLO & GETFRAME;
-		
-			// aggiorno la page table del processo x (in mutua esclusione)
-			SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, (unsigned int)(&getsupportdata), 0);
-			SYSCALL(RECEIVEMESSAGE, (unsigned int)mutex_pcb, 0, 0);
-			// aggiorno la TLB, se la pagina k del processo x è in TLB (in mutua esclusione)
-			SYSCALL(SENDMESSAGE, (unsigned int)tlb_pcb, (unsigned int)(&getsupportdata), 0);
-			SYSCALL(RECEIVEMESSAGE, (unsigned int)tlb_pcb, 0, 0);
-			// scrivo il contenuto del frame i sulla posizione corretta del flash device del processo x
-			SYSCALL(SENDMESSAGE, (unsigned int)flash_pcb, (unsigned int)(&getsupportdata), 0);
-			SYSCALL(RECEIVEMESSAGE, (unsigned int)flash_pcb, 0, 0);
-		}
-
-		
-
+	swap_t frame_i = getFrameIndex();
+	memaddr frame_addr_i = page_index_address(frame_i);
+	if (!isFrameFree(swap_pool_table[frame_i])) {
+		int asid = swap_pool_table[frame_i].sw_asid;
+		int page = swap_pool_table[frame_i].sw_pageNo;
 	}
+
+	if (swap_pool_table[frame_i].sw_pte == NULL) {
+		PANIC();
 	}
+
+	// controllo se la pagina è dirty
+	// unsigned int dirty = swap_pool_table[i].sw_pte->pte_entryLO &
+	// DIRTYON; if (dirty)
+
+	// disabilito gli interrupt
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
+
+	// marco la page table entry k del processo x come non valida
+	swap_pool_table[frame_i].sw_pte->pte_entryLO &= ~VALIDON;
+
+	// se la entry k del processo x è in TLB, cancello tutte le entry della
+	// TLB
+	TLBCLR();
+
+	// riabilito gli interrupt
+	setSTATUS(status);
+
+	memaddr ram_addr = frame_i->sw_pte->pte_entryLO >> 12;
+
+	memaddr virtual_addr = frame_i->sw_pte->pte_entryHI >> VPNSHIFT;
+	int disk_block = (virtual_addr - 0x800000B0) / PAGESIZE;
+
+	// Write the contents of frame i to the correct location on process x’s
+	// backing store/flash device
+	read_write_flash(ram_addr, disk_block, asid, 1);
+
+	// Read the contents of the Current Process’s backing store/flash device
+	// logical page p into frame i
+	read_write_flash(ram_addr, missing_page, asid, 0);
+
+	swap_pool_table[frame_i].sw_asid = asid;
+	swap_pool_table[frame_i].sw_pageNo = missing_page;
+	swap_pool_table[frame_i].sw_pte = &s->sup_privatePgTbl[missing_page];
+
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << 3));
+
+	s->sup_privatePgTbl[missing_page].pte_entryLO = ram_addr << 12 |
+							VALIDON | DIRTYON;
+
+	TLBCLR();
+
+	setSTATUS(status);
+
+	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, (), 0);
+
+	p.fields.p = 0;
+	p.fields.v = 1;
+	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, (unsigned int)&p.payload,
+		0);
+	SYSCALL(RECEIVEMESSAGE, (unsigned int)mutex_pcb, 0, 0);
+
+	LDST(&s->sup_exceptState[PGFAULTEXCEPT]);
 }
-
 
 int isvalidAsid(int asid)
 {
 	return asid > 0 && asid <= UPROCMAX;
 }
 
-int isFrameOccupied(swap_t *frame)
+int isFrameFree(swap_t *frame)
 {
-	return frame->sw_asid != -1;
+	return frame->sw_asid == -1;
 }
 
 // Convert page_index [0, 16] to the corresponding address in the swap pool
 memaddr page_index_address(size_tt page_index)
 {
-	if (page_index < 0 || page_index >= SWAP_POOL_SIZE) {
+	if (page_index < 0 || page_index >= POOLSIZE) {
 		return (memaddr)NULL;
-	}
-	else {
+	} else {
 		return (0x20020000 + (page_index * PAGESIZE));
 	}
 }
@@ -163,11 +202,15 @@ void update_tlb(pteEntry_t *pte)
 
 	// Se l'entry è presente nel TLB (Index.P == 0), la aggiorno
 	if (getINDEX() == 0) {
-		// To modify the content of the TLB, we need to write value into the CP0 registers
+		// To modify the content of the TLB, we need to write value into
+		// the CP0 registers
 		setENTRYHI(pte->pte_entryHI);
 		setENTRYLO(pte->pte_entryLO);
-		// TLB write index command that writes the entry in the correct TLB index
+		// TLB write index command that writes the entry in the correct
+		// TLB index
 		TLBWI();
+	} else {
+		PANIC();
 	}
 }
 
@@ -175,15 +218,103 @@ void update_tlb(pteEntry_t *pte)
 size_tt getFrameIndex()
 {
 	// Cerco un frame libero
-	for (size_tt i = 0; i < SWAP_POOL_SIZE; i++) {
-		if (!isFrameOccupied(&swap_pool_table[i])) {
+	for (size_tt i = 0; i < POOLSIZE - 1; i++) {
+		if (isFrameFree(swap_pool_table[i])) {
 			return i;
 		}
 	}
 
 	// Se non ci sono frame liberi, uso la politica FIFO
 	static size_tt frame_index = -1;
-	frame_index = (frame_index + 1) % SWAP_POOL_SIZE;
+	frame_index = (frame_index + 1) % POOLSIZE;
 	return frame_index;
 }
 
+void read_write_flash(memaddr ram_address, unsigned int disk_block,
+		      unsigned int asid, int is_write)
+{
+	// Load in ram the source code of the child process
+	// (flash device number [ASID])
+	devreg_t *base = (devreg_t *)DEV_REG_ADDR(IL_FLASH, asid - 1);
+	unsigned int *data0 = &(base->dtp.data0);
+	unsigned int *data1 = &(base->dtp.data1);
+	unsigned int *command_addr = &(base->dtp.command);
+	unsigned int status;
+
+	// .text? .data? idk
+	// these lines will load the entire flash memory in RAM
+	ssi_do_io_t do_io = {
+		.commandAddr = data0,
+		.commandValue = ram_address,
+	};
+	ssi_payload_t payload = {
+		.service_code = DOIO,
+		.arg = &do_io,
+	};
+	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&payload),
+		0);
+	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&status),
+		0);
+
+	if (status != 1)
+		trap_handler();
+
+	do_io.commandAddr = command_addr;
+	do_io.commandValue = disk_block << 8 | (is_write ? WRITEBLK : READBLK);
+
+	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&payload),
+		0);
+	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&status),
+		0);
+
+	if (status != 1)
+		trap_handler();
+}
+
+void write_flash(swap_t *frame_i, unsigned int asid)
+{
+	// Load in ram the source code of the child process
+	// (flash device number [ASID])
+	devreg_t *base = (devreg_t *)DEV_REG_ADDR(IL_FLASH, asid - 1);
+	unsigned int *data0 = &(base->dtp.data0);
+	unsigned int *data1 = &(base->dtp.data1);
+	unsigned int *command_addr = &(base->dtp.command);
+	unsigned int status;
+
+	// .text? .data? idk
+	// these lines will load the entire flash memory in RAM
+	ssi_do_io_t do_io = {
+		.commandAddr = data0,
+		.commandValue = frame_i->sw_pte->pte_entryLO >> 12,
+	};
+	ssi_payload_t payload = {
+		.service_code = DOIO,
+		.arg = &do_io,
+	};
+	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&payload),
+		0);
+	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&status),
+		0);
+
+	if (status != 1)
+		trap_handler();
+
+	memaddr virtual_addr = frame_i->sw_pte->pte_entryHI >> VPNSHIFT;
+
+	int disk_block = (virtual_addr - 0x800000B0) / PAGESIZE;
+	// TODO CHECK STACK POINTER that is block 31
+
+	// BLOCKNUMBER from 8 to 31 of command
+	int command = disk_block << 8 | WRITEBLK;
+
+	do_io.commandAddr = command_addr;
+	do_io.commandValue = command;
+
+	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&payload),
+		0);
+	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&status),
+		0);
+
+	if (status != 1)
+		trap_handler();
+}

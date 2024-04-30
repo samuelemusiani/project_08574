@@ -22,10 +22,25 @@ static int is_waiting_for_me(pcb_t *sender, pcb_t *dest);
 
 void uTLB_RefillHandler()
 {
-	setENTRYHI(0x80000000);
-	setENTRYLO(0x00000000);
+	unsigned int ehi = current_process->p_s->entry_hi;
+	int i = 0;
+	while  (i < MAXPAGES) {
+		if (ehi == current_process->p_supportStruct->sup_privatePgTbl[i]
+				    .pte_entryHI) {
+			break;
+		}
+		i++;
+	}
+	if (i == MAXPAGES) {
+		PANIC();
+	}
+	unsigned int elo = current_process->p_supportStruct->sup_privatePgTbl[i]
+				   .pte_entryLO;
+	setENTRYLO(elo);
+	setENTRYHI(ehi);
+
 	TLBWR();
-	LDST((state_t *)0x0FFFF000);
+	LDST((state_t *)BIOSDATAPAGE);
 }
 
 /*

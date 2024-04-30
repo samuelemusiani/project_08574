@@ -5,7 +5,7 @@
 #include <uriscv/types.h>
 
 static void syscall_handler(state_t *s);
-static void trap_handler(state_t *s);
+void trap_handler(state_t *s);
 
 void general_exception_handler()
 {
@@ -26,7 +26,7 @@ void general_exception_handler()
 	}
 }
 
-static void trap_handler(state_t *s)
+void trap_handler(state_t *s)
 {
 	// TODO Release of the mutual exclusion on the SWAP Pool
 
