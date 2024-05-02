@@ -24,7 +24,6 @@ static size_tt getFrameIndex();
 static void read_write_flash(memaddr ram_address, unsigned int disk_block,
 			     unsigned int asid, int is_write);
 static int isFrameFree(swap_t *frame);
-// static memaddr page_index_address(size_tt page_index);
 
 void initSwapStructs()
 {
@@ -61,34 +60,26 @@ void mutex_proc()
 
 void tlb_handler()
 {
-	// Devo mandare una SYSCALL a SSI per richieddere il getsupportdata
-	// Devo ricevere il messaggio da SSI
 	ssi_payload_t getsupportdata = { .service_code = GETSUPPORTPTR,
 					 .arg = NULL };
 
 	support_t *s;
 	unsigned int status_IT;
 
-	// richiedo il GETSUPPORTPTR
+	// Get the support structure of the current process from the SSI
 	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb,
 		(unsigned int)(&getsupportdata), 0);
-	// ricevo il GETSUPPORTPTR
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&s), 0);
 
 	int asid = s->sup_asid;
 
-	// Se la causa è una TLB-Modification exception, deve considerare
-	// l'eccezione come program trap ovvero cause register ha excode 24
-
-	// TLB-MOD
+	// If the cause is a TLB-Mod exception, treat it as a program trap
 	if ((s->sup_exceptState[PGFAULTEXCEPT].cause & GETEXECCODE) == 24) {
-		// TLB-Modification exception is treated as a program trap
 		trap_handler(&s->sup_exceptState[PGFAULTEXCEPT]);
 	}
-	// Se la causa è una TLB-invalid
+	// Oherwise, it is a TLB-Invalid exception
 
-	// devo prendere la mutua esclusione sulla swap pool table mandando un
-	// messaggio allo swap mutex e ricevendo il messaggio di conferma
+	// Gain mutual exclusion by sending a message to the mutex process
 	mutex_payload_t p = { .fields.p = 1 };
 	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, (unsigned int)&p.payload,
 		0);
@@ -99,7 +90,7 @@ void tlb_handler()
 		 0x800000B0) /
 		PAGESIZE;
 	// TODO: check stack pointer that is block 31. THIS ONLY WORK FOR BLOCK
-	// [0..30]
+	// [0..30]???
 
 	// scegliere un frame i di ram dallo swap pool (FIFO)
 
@@ -111,20 +102,22 @@ void tlb_handler()
 	//  - scrivo il contenuto del frame i sulla posizione correta del flash
 	//  device del processo x
 
+	// Choose a frame i in the swap pool (FIFO)
 	unsigned int frame_i = getFrameIndex();
-	// memaddr frame_addr_i = page_index_address(frame_i);
-	if (!isFrameFree(&swap_pool_table[frame_i])) {
+	if (!isFrameFree(&swap_pool_table[frame_i])) { // TODO: Do we need to check if it is dirty?
+		// Disable interrupts
 		status_IT = getSTATUS();
 		setSTATUS(status_IT & ~(1 << 3));
 
-		// marco la page table entry k del processo x come non valida
+		// Mark the page as invalid
 		swap_pool_table[frame_i].sw_pte->pte_entryLO &= ~VALIDON;
 
-		// se la entry k del processo x è in TLB, cancello tutte le
-		// entry della TLB
+		// TODO: Update the TLB
+		// we need to check if the page is in the TLB and to update it instead of clearing of TLB
+		// I made the function update_tlb but for now we just clear the TLB
 		TLBCLR();
 
-		// riabilito gli interrupt
+		// Enable interrupts
 		setSTATUS(status_IT);
 	}
 
@@ -132,7 +125,6 @@ void tlb_handler()
 		PANIC();
 	}
 
-	// disabilito gli interrupt
 
 	memaddr ram_addr = swap_pool_table[frame_i].sw_pte->pte_entryLO >> 12;
 
@@ -152,14 +144,19 @@ void tlb_handler()
 	swap_pool_table[frame_i].sw_pageNo = missing_page;
 	swap_pool_table[frame_i].sw_pte = &s->sup_privatePgTbl[missing_page];
 
+	// Disable interrupts
 	status_IT = getSTATUS();
 	setSTATUS(status_IT & ~(1 << 3));
 
+	// Update the page table of the process
 	s->sup_privatePgTbl[missing_page].pte_entryLO = ram_addr << 12 |
 							VALIDON | DIRTYON;
 
+	// Update the TLB, now we just clear the TLB
+	// update_tlb(&s->sup_privatePgTbl[missing_page])?? 
 	TLBCLR();
 
+	// Enable interrupts
 	setSTATUS(status_IT);
 
 	p.fields.p = 0;
@@ -170,12 +167,14 @@ void tlb_handler()
 
 	LDST(&s->sup_exceptState[PGFAULTEXCEPT]);
 }
-/*
+
+/* Do we need this function?
 static int isvalidAsid(int asid)
 {
 	return asid > 0 && asid <= UPROCMAX;
 }
 */
+
 static int isFrameFree(swap_t *frame)
 {
 	return frame->sw_asid == -1;
@@ -191,6 +190,7 @@ static memaddr page_index_address(size_tt page_index)
 	}
 }
 
+// We should use this function to update the TLB as explained in the specs
 void update_tlb(pteEntry_t *pte)
 {
 	// imposto in EntryHI CP0 il valore da cercare nel TLB
@@ -212,6 +212,7 @@ void update_tlb(pteEntry_t *pte)
 	}
 }
 */
+
 // PandOS replacement algorithm round robin
 static size_tt getFrameIndex()
 {
@@ -238,7 +239,6 @@ static void read_write_flash(memaddr ram_address, unsigned int disk_block,
 	unsigned int *command_addr = &(base->dtp.command);
 	unsigned int status;
 
-	// .text? .data? idk
 	// these lines will load the entire flash memory in RAM
 	ssi_do_io_t do_io = {
 		.commandAddr = data0,
