@@ -12,5 +12,6 @@
 #include <uriscv/arch.h>
 
 extern pcb_t *ssi_pcb;
+extern pcb_t *mutex_pcb;
 
 #endif

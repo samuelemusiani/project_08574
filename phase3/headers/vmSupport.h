@@ -11,7 +11,7 @@
 #include <uriscv/liburiscv.h>
 #include <uriscv/arch.h>
 
-extern swap_t *swap_pool;
+extern memaddr swap_pool;
 
 void initSwapStructs();
 void mutex_proc();

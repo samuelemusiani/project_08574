@@ -107,41 +107,6 @@ void sst()
 	// need to manage
 	int asid = support->sup_asid;
 
-	// Load in ram the source code of the child process
-	// (flash device number [ASID])
-	devreg_t *base = (devreg_t *)DEV_REG_ADDR(IL_FLASH, asid - 1);
-	unsigned int *data0 = &(base->dtp.data0);
-	unsigned int *command = &(base->dtp.command);
-	unsigned int status;
-
-	// .text? .data? idk
-	// these lines will load the entire flash memory in RAM
-	ssi_do_io_t do_io = {
-		.commandAddr = data0,
-		.commandValue = 0x0, // TODO: find a valid RAM address
-				     // (specs 2.1 pag. 3)
-	};
-	ssi_payload_t payload = {
-		.service_code = DOIO,
-		.arg = &do_io,
-	};
-	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&payload),
-		0);
-	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&status),
-		0);
-
-	// is 32 the number of blocks in the flash memory?
-	for (int i = 0; i < 32; i++) {
-		do_io.commandAddr = command,
-		do_io.commandValue = i << 8 | READBLK;
-		SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb,
-			(unsigned int)(&payload), 0);
-		SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb,
-			(unsigned int)(&status), 0);
-		if (status != 1)
-			PANIC();
-	}
-
 	// SST creates a child process that executes one of the U-proc testers
 	// SST shares the same ASID and support structure with its child U-proc.
 

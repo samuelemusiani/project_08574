@@ -64,5 +64,7 @@ void test()
 	for (int i = 0; i < 1 /* 8 */; i++) {
 		SYSCALL(RECEIVEMESSAGE, ANYMESSAGE, 0, 0);
 	}
+
+	p_term(mutex_pcb);
 	p_term(SELF);
 }
