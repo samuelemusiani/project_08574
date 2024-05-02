@@ -75,13 +75,12 @@ void tlb_handler()
 
 	// Gain mutual exclusion by sending a message to the mutex process
 	mutex_payload_t p = { .fields.p = 1 };
-	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, (unsigned int)&p.payload,
-		0);
+	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, p.payload, 0);
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)mutex_pcb, 0, 0);
 
 	memaddr missing_page =
 		((s->sup_exceptState[PGFAULTEXCEPT].entry_hi >> VPNSHIFT) -
-		 0x800000B0) /
+		 0x80000) /
 		PAGESIZE;
 	// TODO: check stack pointer that is block 31. THIS ONLY WORK FOR BLOCK
 	// [0..30]???
@@ -147,8 +146,7 @@ void tlb_handler()
 
 	p.fields.p = 0;
 	p.fields.v = 1;
-	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, (unsigned int)&p.payload,
-		0);
+	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, p.payload, 0);
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)mutex_pcb, 0, 0);
 
 	LDST(&s->sup_exceptState[PGFAULTEXCEPT]);
@@ -221,11 +219,6 @@ static void read_write_flash(memaddr ram_address, unsigned int disk_block,
 	};
 	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&payload),
 		0);
-	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&status),
-		0);
-
-	if (status != 1)
-		trap_handler(NULL); // TODO : CHANGE!!!
 
 	do_io.commandAddr = command_addr;
 	do_io.commandValue = disk_block << 8 | (is_write ? WRITEBLK : READBLK);

@@ -98,7 +98,10 @@ void sst()
 {
 	// get the support structure from the ssi. This is the same for the
 	// child process
-	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, GETSUPPORTPTR, 0);
+	ssi_payload_t getsupportdata = { .service_code = GETSUPPORTPTR,
+					 .arg = NULL };
+	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb,
+		(unsigned int)(&getsupportdata), 0);
 	support_t *support;
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)&support,
 		0);

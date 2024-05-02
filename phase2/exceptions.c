@@ -22,7 +22,7 @@ static int is_waiting_for_me(pcb_t *sender, pcb_t *dest);
 
 void uTLB_RefillHandler()
 {
-	unsigned int ehi = current_process->p_s.entry_hi;
+	unsigned int ehi = ((state_t *)BIOSDATAPAGE)->entry_hi;
 	int i = 0;
 	while (i < MAXPAGES) {
 		if (ehi == current_process->p_supportStruct->sup_privatePgTbl[i]
@@ -31,13 +31,16 @@ void uTLB_RefillHandler()
 		}
 		i++;
 	}
-	if (i == MAXPAGES) {
-		PANIC();
-	}
-	unsigned int elo = current_process->p_supportStruct->sup_privatePgTbl[i]
-				   .pte_entryLO;
-	setENTRYLO(elo);
 	setENTRYHI(ehi);
+
+	if (i == MAXPAGES) {
+		setENTRYLO(~VALIDON);
+	} else {
+		unsigned int elo =
+			current_process->p_supportStruct->sup_privatePgTbl[i]
+				.pte_entryLO;
+		setENTRYLO(elo);
+	}
 
 	TLBWR();
 	LDST((state_t *)BIOSDATAPAGE);
