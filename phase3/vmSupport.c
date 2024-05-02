@@ -209,22 +209,29 @@ static void read_write_flash(memaddr ram_address, unsigned int disk_block,
 	unsigned int status;
 
 	// these lines will load the entire flash memory in RAM
-	ssi_do_io_t do_io = {
+	ssi_do_io_t data0_doio = {
 		.commandAddr = data0,
 		.commandValue = ram_address,
 	};
-	ssi_payload_t payload = {
+	ssi_payload_t data0_payload = {
 		.service_code = DOIO,
-		.arg = &do_io,
+		.arg = &data0_doio,
 	};
-	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&payload),
-		0);
+	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb,
+		(unsigned int)(&data0_payload), 0);
 
-	do_io.commandAddr = command_addr;
-	do_io.commandValue = disk_block << 8 | (is_write ? WRITEBLK : READBLK);
+	ssi_do_io_t command_doio = {
+		.commandAddr = command_addr,
+		.commandValue = disk_block << 8 |
+				(is_write ? WRITEBLK : READBLK),
+	};
+	ssi_payload_t command_payload = {
+		.service_code = DOIO,
+		.arg = &command_doio,
+	};
 
-	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&payload),
-		0);
+	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb,
+		(unsigned int)(&command_payload), 0);
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&status),
 		0);
 
