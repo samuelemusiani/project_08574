@@ -3,14 +3,12 @@
 #include "headers/initProc.h"
 #include "headers/sysSupport.h"
 
-#define NOPROC -1
-
 extern pcb_t *ssi_pcb;
 
 // La swap pool table è un array di swap_t entries
 swap_t swap_pool_table[POOLSIZE];
 
-swap_t *swap_pool;
+memaddr swap_pool;
 
 typedef union mutex_payload_t {
 	struct {
@@ -28,7 +26,7 @@ static int isFrameFree(swap_t *frame);
 void initSwapStructs()
 {
 	// Init swap pool table
-	swap_pool = (swap_t *)FLASHPOOLSTART; // TODO: Find more precise value
+	swap_pool = (memaddr)FLASHPOOLSTART; // TODO: Find more precise value
 
 	for (int i = 0; i < POOLSIZE; i++) {
 		swap_pool_table[i].sw_asid = NOPROC;
@@ -53,9 +51,6 @@ void mutex_proc()
 		} while (p.fields.v != 1);
 		SYSCALL(SENDMESSAGE, (unsigned int)sender, 0, 0);
 	}
-
-	// TODO: Mutex process
-	p_term(SELF);
 }
 
 void tlb_handler()
@@ -64,7 +59,6 @@ void tlb_handler()
 					 .arg = NULL };
 
 	support_t *s;
-	unsigned int status_IT;
 
 	// Get the support structure of the current process from the SSI
 	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb,
@@ -92,19 +86,14 @@ void tlb_handler()
 	// TODO: check stack pointer that is block 31. THIS ONLY WORK FOR BLOCK
 	// [0..30]???
 
-	// scegliere un frame i di ram dallo swap pool (FIFO)
-
-	// se il frame i è occupato da una pagina logica k del processo x e la
-	// pagina k è dirty (modificata) allora
-	// 	- aggiorno la page table del processo x (in mutua esclusione)
-	//  - aggiorno la TLB, se la pagina k del processo x è in TLB (in mutua
-	//  esclusione)
-	//  - scrivo il contenuto del frame i sulla posizione correta del flash
-	//  device del processo x
-
-	// Choose a frame i in the swap pool (FIFO)
+	// Choose a frame i in the swap pool
 	unsigned int frame_i = getFrameIndex();
-	if (!isFrameFree(&swap_pool_table[frame_i])) { // TODO: Do we need to check if it is dirty?
+	unsigned int status_IT;
+
+	memaddr ram_addr = swap_pool + frame_i * PAGESIZE;
+
+	if (!isFrameFree(&swap_pool_table[frame_i])) { // TODO: Do we need to
+						       // check if it is dirty?
 		// Disable interrupts
 		status_IT = getSTATUS();
 		setSTATUS(status_IT & ~(1 << 3));
@@ -113,28 +102,25 @@ void tlb_handler()
 		swap_pool_table[frame_i].sw_pte->pte_entryLO &= ~VALIDON;
 
 		// TODO: Update the TLB
-		// we need to check if the page is in the TLB and to update it instead of clearing of TLB
-		// I made the function update_tlb but for now we just clear the TLB
+		// we need to check if the page is in the TLB and to update it
+		// instead of clearing of TLB I made the function update_tlb but
+		// for now we just clear the TLB
 		TLBCLR();
 
 		// Enable interrupts
 		setSTATUS(status_IT);
+
+		memaddr virtual_addr =
+			swap_pool_table[frame_i].sw_pte->pte_entryHI >>
+			VPNSHIFT;
+
+		int disk_block = (virtual_addr - 0x800000B0) / PAGESIZE;
+		// TODO: Check for stack pointer?
+
+		// Write the contents of frame i to the correct location on
+		// process x’s backing store/flash device
+		read_write_flash(ram_addr, disk_block, asid, 1);
 	}
-
-	if (swap_pool_table[frame_i].sw_pte == NULL) {
-		PANIC();
-	}
-
-
-	memaddr ram_addr = swap_pool_table[frame_i].sw_pte->pte_entryLO >> 12;
-
-	memaddr virtual_addr = swap_pool_table[frame_i].sw_pte->pte_entryHI >>
-			       VPNSHIFT;
-	int disk_block = (virtual_addr - 0x800000B0) / PAGESIZE;
-
-	// Write the contents of frame i to the correct location on process x’s
-	// backing store/flash device
-	read_write_flash(ram_addr, disk_block, asid, 1);
 
 	// Read the contents of the Current Process’s backing store/flash device
 	// logical page p into frame i
@@ -153,7 +139,7 @@ void tlb_handler()
 							VALIDON | DIRTYON;
 
 	// Update the TLB, now we just clear the TLB
-	// update_tlb(&s->sup_privatePgTbl[missing_page])?? 
+	// update_tlb(&s->sup_privatePgTbl[missing_page])??
 	TLBCLR();
 
 	// Enable interrupts
@@ -168,29 +154,14 @@ void tlb_handler()
 	LDST(&s->sup_exceptState[PGFAULTEXCEPT]);
 }
 
-/* Do we need this function?
-static int isvalidAsid(int asid)
-{
-	return asid > 0 && asid <= UPROCMAX;
-}
-*/
-
 static int isFrameFree(swap_t *frame)
 {
 	return frame->sw_asid == -1;
 }
 
-/* Convert page_index [0, 16] to the corresponding address in the swap pool
-static memaddr page_index_address(size_tt page_index)
-{
-	if (page_index < 0 || page_index >= POOLSIZE) {
-		return (memaddr)NULL;
-	} else {
-		return (0x20020000 + (page_index * PAGESIZE));
-	}
-}
-
+/*
 // We should use this function to update the TLB as explained in the specs
+// PLEASE CHECK ME BEFORE USAGE
 void update_tlb(pteEntry_t *pte)
 {
 	// imposto in EntryHI CP0 il valore da cercare nel TLB
@@ -223,7 +194,7 @@ static size_tt getFrameIndex()
 		}
 	}
 
-	// Se non ci sono frame liberi, uso la politica FIFO
+	// Se non ci sono frame liberi
 	static size_tt frame_index = -1;
 	frame_index = (frame_index + 1) % POOLSIZE;
 	return frame_index;
