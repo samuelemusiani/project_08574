@@ -15,7 +15,6 @@
 #define QPAGE 1024
 
 #define ASIDMASK 0x40
-#define GET_ASID ((getENTRYHI() >> ASIDSHIFT) & ASIDMASK)
 
 #define WRITESTATUSMASK 0xFF
 
