@@ -78,12 +78,11 @@ void tlb_handler()
 	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, p.payload, 0);
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)mutex_pcb, 0, 0);
 
-	memaddr missing_page =
-		((s->sup_exceptState[PGFAULTEXCEPT].entry_hi >> VPNSHIFT) -
-		 0x80000) /
-		PAGESIZE;
-	// TODO: check stack pointer that is block 31. THIS ONLY WORK FOR BLOCK
-	// [0..30]???
+	memaddr tmp = (s->sup_exceptState[PGFAULTEXCEPT].entry_hi >> VPNSHIFT);
+	memaddr missing_page = (tmp - 0x80000) / PAGESIZE;
+	if (tmp == 0xBFFFF) { // (0xC0000000 - PAGESIZE)>> 12
+		missing_page = 31;
+	}
 
 	// Choose a frame i in the swap pool
 	unsigned int frame_i = getFrameIndex();
@@ -121,8 +120,8 @@ void tlb_handler()
 		read_write_flash(ram_addr, disk_block, asid, 1);
 	}
 
-	// Read the contents of the Current Process’s backing store/flash device
-	// logical page p into frame i
+	// Read the contents of the Current Process’s backing
+	// store/flash device logical page p into frame i
 	read_write_flash(ram_addr, missing_page, asid, 0);
 
 	swap_pool_table[frame_i].sw_asid = asid;
