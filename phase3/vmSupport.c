@@ -134,7 +134,9 @@ void tlb_handler()
 	setSTATUS(status_IT & ~(1 << 3));
 
 	// Update the page table of the process
-	s->sup_privatePgTbl[missing_page].pte_entryLO = ram_addr << 12 |
+	s->sup_privatePgTbl[missing_page].pte_entryHI =
+		s->sup_exceptState[PGFAULTEXCEPT].entry_hi;
+	s->sup_privatePgTbl[missing_page].pte_entryLO = (ram_addr & ~(0xFFF)) |
 							VALIDON | DIRTYON;
 
 	// Update the TLB, now we just clear the TLB
