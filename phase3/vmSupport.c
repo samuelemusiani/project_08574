@@ -45,6 +45,17 @@ void mutex_proc()
 	}
 }
 
+int find_page_by_entryhi(unsigned int entry_hi)
+{
+	unsigned int tmp = entry_hi >> VPNSHIFT;
+	memaddr missing_page = (tmp - 0x80000) / PAGESIZE;
+	if (tmp == 0xBFFFF) { // (0xC0000000 - PAGESIZE)>> 12
+		missing_page = 31;
+	}
+
+	return missing_page;
+}
+
 void tlb_handler()
 {
 	ssi_payload_t getsupportdata = { .service_code = GETSUPPORTPTR,
@@ -70,11 +81,8 @@ void tlb_handler()
 	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, p.payload, 0);
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)mutex_pcb, 0, 0);
 
-	memaddr tmp = (s->sup_exceptState[PGFAULTEXCEPT].entry_hi >> VPNSHIFT);
-	memaddr missing_page = (tmp - 0x80000) / PAGESIZE;
-	if (tmp == 0xBFFFF) { // (0xC0000000 - PAGESIZE)>> 12
-		missing_page = 31;
-	}
+	memaddr missing_page = find_page_by_entryhi(
+		s->sup_exceptState[PGFAULTEXCEPT].entry_hi);
 
 	// Choose a frame i in the swap pool
 	unsigned int frame_i = getFrameIndex();
@@ -100,11 +108,9 @@ void tlb_handler()
 		// Enable interrupts
 		setSTATUS(status_IT);
 
-		memaddr virtual_addr =
-			swap_pool_table[frame_i].sw_pte->pte_entryHI >>
-			VPNSHIFT;
+		int disk_block = find_page_by_entryhi(
+			swap_pool_table[frame_i].sw_pte->pte_entryHI);
 
-		int disk_block = (virtual_addr - 0x800000B0) / PAGESIZE;
 		// TODO: Check for stack pointer?
 
 		// Write the contents of frame i to the correct location on
