@@ -13,6 +13,14 @@
 
 extern memaddr swap_pool;
 
+typedef union mutex_payload_t {
+	struct {
+		char p;
+		char v;
+	} fields;
+	unsigned int payload;
+} mutex_payload_t;
+
 void initSwapStructs();
 void mutex_proc();
 void tlb_handler();

@@ -10,14 +10,6 @@ swap_t swap_pool_table[POOLSIZE];
 
 memaddr swap_pool;
 
-typedef union mutex_payload_t {
-	struct {
-		char p;
-		char v;
-	} fields;
-	unsigned int payload;
-} mutex_payload_t;
-
 static size_tt getFrameIndex();
 static void read_write_flash(memaddr ram_address, unsigned int disk_block,
 			     unsigned int asid, int is_write);
@@ -237,5 +229,5 @@ static void read_write_flash(memaddr ram_address, unsigned int disk_block,
 		0);
 
 	if (status != 1)
-		trap_handler(NULL);
+		trap_handler();
 }

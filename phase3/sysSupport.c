@@ -1,11 +1,12 @@
 #include "headers/sysSupport.h"
 #include "headers/sst.h"
 #include "headers/utils3.h"
+#include "headers/vmSupport.h"
+#include "headers/initProc.h"
 #include <uriscv/liburiscv.h>
 #include <uriscv/types.h>
 
 static void syscall_handler(support_t *support);
-void trap_handler(state_t *s);
 
 void general_exception_handler()
 {
@@ -26,15 +27,15 @@ void general_exception_handler()
 	if (excCode == 8) {
 		syscall_handler(support);
 	} else {
-		trap_handler(s);
+		trap_handler();
 	}
 }
 
-void trap_handler(state_t *s)
+void trap_handler()
 {
-	// TODO Release of the mutual exclusion on the SWAP Pool
-
 	// terminate process
+	mutex_payload_t p = { .fields.v = 1 };
+	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, p.payload, 0);
 	p_term(SELF);
 }
 

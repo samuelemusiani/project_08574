@@ -11,7 +11,7 @@
 #include <uriscv/liburiscv.h>
 
 extern pcb_PTR ssi_pcb;
-extern void trap_handler(state_t *s);
+extern void trap_handler();
 
 void send_message_to_ssi(unsigned int payload);
 void general_exception_handler();
