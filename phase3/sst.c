@@ -26,29 +26,30 @@ static void write(sst_print_t *write_payload, unsigned int asid,
 		while (write_payload->length > count) {
 			unsigned int value =
 				(unsigned int)*(write_payload->string + count);
-			ssi_do_io_t do_io = {
+			ssi_do_io_t do_io_char = {
 				.commandAddr = data0,
 				.commandValue = value,
 			};
-			ssi_payload_t payload = {
+			ssi_payload_t payload_char = {
 				.service_code = DOIO,
-				.arg = &do_io,
+				.arg = &do_io_char,
 			};
 
 			// send char to printer
 			SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb,
-				(unsigned int)(&payload), 0);
-			SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb,
-				(unsigned int)(&status), 0);
-			// 1 -> device ready, others are all errors
-			if ((status & WRITESTATUSMASK) != 1)
-				PANIC();
+				(unsigned int)(&payload_char), 0);
 
-			// send command "print"
-			do_io.commandAddr = command;
-			do_io.commandValue = PRINTCHR;
+			ssi_do_io_t do_io_command = {
+				.commandAddr = command,
+				.commandValue = PRINTCHR,
+			};
+			ssi_payload_t payload_command = {
+				.service_code = DOIO,
+				.arg = &do_io_command,
+			};
+
 			SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb,
-				(unsigned int)(&payload), 0);
+				(unsigned int)(&payload_command), 0);
 			SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb,
 				(unsigned int)(&status), 0);
 			if ((status & WRITESTATUSMASK) != 1)
