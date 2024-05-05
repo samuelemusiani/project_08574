@@ -32,6 +32,7 @@ void test()
 	for (int i = 1; i <= 1 /* 8 */; i++) {
 		state_t tmpstate;
 		STST(&tmpstate);
+		tmpstate.entry_hi = i << ASIDSHIFT;
 		tmpstate.reg_sp = mutexstate.reg_sp - QPAGE * i; // ??
 		tmpstate.pc_epc = (memaddr)sst;
 		tmpstate.status |= MSTATUS_MPP_M | MSTATUS_MIE_BIT; // ???
