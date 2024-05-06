@@ -185,7 +185,7 @@ void update_tlb(pteEntry_t *pte)
 static size_tt getFrameIndex()
 {
 	// Cerco un frame libero
-	for (size_tt i = 0; i < POOLSIZE - 1; i++) {
+	for (size_tt i = 0; i < POOLSIZE; i++) {
 		if (isFrameFree(&swap_pool_table[i])) {
 			return i;
 		}
