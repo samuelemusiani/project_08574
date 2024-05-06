@@ -121,14 +121,12 @@ void tlb_handler()
 		// Enable interrupts
 		setSTATUS(status_IT);
 
-		int disk_block = find_page_by_entryhi(
-			swap_pool_table[frame_i].sw_pte->pte_entryHI);
-
 		// TODO: Check for stack pointer?
 
 		// Write the contents of frame i to the correct location on
 		// process x’s backing store/flash device
-		read_write_flash(ram_addr, disk_block, asid, 1);
+		read_write_flash(ram_addr, swap_pool_table[frame_i].sw_pageNo,
+				 swap_pool_table[frame_i].sw_asid, 1);
 	}
 
 	// Read the contents of the Current Process’s backing
