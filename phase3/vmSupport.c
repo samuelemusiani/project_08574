@@ -10,14 +10,6 @@ swap_t swap_pool_table[POOLSIZE];
 
 memaddr swap_pool;
 
-typedef union mutex_payload_t {
-	struct {
-		char p;
-		char v;
-	} fields;
-	unsigned int payload;
-} mutex_payload_t;
-
 static size_tt getFrameIndex();
 static void read_write_flash(memaddr ram_address, unsigned int disk_block,
 			     unsigned int asid, int is_write);
@@ -53,6 +45,30 @@ void mutex_proc()
 	}
 }
 
+int find_page_by_entryhi(unsigned int entry_hi)
+{
+	unsigned int tmp = entry_hi >> VPNSHIFT;
+	unsigned int missing_page = -2;
+	if (tmp > 0x80000 + PAGESIZE * MAXPAGES) { // Stack page
+		missing_page = 31 + (0xBFFFF - tmp);
+	} else { // Program page
+		missing_page = (tmp - 0x80000);
+	}
+
+	return missing_page;
+}
+
+int seek_entryhi_index_on_pagetable(unsigned int entry_hi, support_t *s)
+{
+	for (int i = 0; i < MAXPAGES; i++) {
+		if (s->sup_privatePgTbl[i].pte_entryHI == 0 ||
+		    s->sup_privatePgTbl[i].pte_entryHI == entry_hi) {
+			return i;
+		}
+	}
+	return -1; // no page left
+}
+
 void tlb_handler()
 {
 	ssi_payload_t getsupportdata = { .service_code = GETSUPPORTPTR,
@@ -75,16 +91,11 @@ void tlb_handler()
 
 	// Gain mutual exclusion by sending a message to the mutex process
 	mutex_payload_t p = { .fields.p = 1 };
-	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, (unsigned int)&p.payload,
-		0);
+	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, p.payload, 0);
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)mutex_pcb, 0, 0);
 
-	memaddr missing_page =
-		((s->sup_exceptState[PGFAULTEXCEPT].entry_hi >> VPNSHIFT) -
-		 0x800000B0) /
-		PAGESIZE;
-	// TODO: check stack pointer that is block 31. THIS ONLY WORK FOR BLOCK
-	// [0..30]???
+	memaddr missing_page = find_page_by_entryhi(
+		s->sup_exceptState[PGFAULTEXCEPT].entry_hi);
 
 	// Choose a frame i in the swap pool
 	unsigned int frame_i = getFrameIndex();
@@ -99,7 +110,7 @@ void tlb_handler()
 		setSTATUS(status_IT & ~(1 << 3));
 
 		// Mark the page as invalid
-		swap_pool_table[frame_i].sw_pte->pte_entryLO &= ~VALIDON;
+		swap_pool_table[frame_i].sw_pte->pte_entryLO = 0;
 
 		// TODO: Update the TLB
 		// we need to check if the page is in the TLB and to update it
@@ -110,33 +121,41 @@ void tlb_handler()
 		// Enable interrupts
 		setSTATUS(status_IT);
 
-		memaddr virtual_addr =
-			swap_pool_table[frame_i].sw_pte->pte_entryHI >>
-			VPNSHIFT;
-
-		int disk_block = (virtual_addr - 0x800000B0) / PAGESIZE;
 		// TODO: Check for stack pointer?
 
 		// Write the contents of frame i to the correct location on
 		// process x’s backing store/flash device
-		read_write_flash(ram_addr, disk_block, asid, 1);
+		read_write_flash(ram_addr, swap_pool_table[frame_i].sw_pageNo,
+				 swap_pool_table[frame_i].sw_asid, 1);
 	}
 
-	// Read the contents of the Current Process’s backing store/flash device
-	// logical page p into frame i
+	// Read the contents of the Current Process’s backing
+	// store/flash device logical page p into frame i
+	//
+	// We should check as this is no always needed. If
+	// it's the first time we access a stack page there
+	// is nothing to load.
 	read_write_flash(ram_addr, missing_page, asid, 0);
+
+	unsigned int page_index = seek_entryhi_index_on_pagetable(
+		s->sup_exceptState[PGFAULTEXCEPT].entry_hi, s);
+	if (page_index == -1) {
+		trap_handler(); // No page left, trap needed
+	}
 
 	swap_pool_table[frame_i].sw_asid = asid;
 	swap_pool_table[frame_i].sw_pageNo = missing_page;
-	swap_pool_table[frame_i].sw_pte = &s->sup_privatePgTbl[missing_page];
+	swap_pool_table[frame_i].sw_pte = &s->sup_privatePgTbl[page_index];
 
 	// Disable interrupts
 	status_IT = getSTATUS();
 	setSTATUS(status_IT & ~(1 << 3));
 
 	// Update the page table of the process
-	s->sup_privatePgTbl[missing_page].pte_entryLO = ram_addr << 12 |
-							VALIDON | DIRTYON;
+	s->sup_privatePgTbl[page_index].pte_entryHI =
+		s->sup_exceptState[PGFAULTEXCEPT].entry_hi;
+	s->sup_privatePgTbl[page_index].pte_entryLO = (ram_addr & ~(0xFFF)) |
+						      VALIDON | DIRTYON;
 
 	// Update the TLB, now we just clear the TLB
 	// update_tlb(&s->sup_privatePgTbl[missing_page])??
@@ -147,8 +166,7 @@ void tlb_handler()
 
 	p.fields.p = 0;
 	p.fields.v = 1;
-	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, (unsigned int)&p.payload,
-		0);
+	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, p.payload, 0);
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)mutex_pcb, 0, 0);
 
 	LDST(&s->sup_exceptState[PGFAULTEXCEPT]);
@@ -188,7 +206,7 @@ void update_tlb(pteEntry_t *pte)
 static size_tt getFrameIndex()
 {
 	// Cerco un frame libero
-	for (size_tt i = 0; i < POOLSIZE - 1; i++) {
+	for (size_tt i = 0; i < POOLSIZE; i++) {
 		if (isFrameFree(&swap_pool_table[i])) {
 			return i;
 		}
@@ -211,30 +229,32 @@ static void read_write_flash(memaddr ram_address, unsigned int disk_block,
 	unsigned int status;
 
 	// these lines will load the entire flash memory in RAM
-	ssi_do_io_t do_io = {
+	ssi_do_io_t data0_doio = {
 		.commandAddr = data0,
 		.commandValue = ram_address,
 	};
-	ssi_payload_t payload = {
+	ssi_payload_t data0_payload = {
 		.service_code = DOIO,
-		.arg = &do_io,
+		.arg = &data0_doio,
 	};
-	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&payload),
-		0);
+	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb,
+		(unsigned int)(&data0_payload), 0);
+
+	ssi_do_io_t command_doio = {
+		.commandAddr = command_addr,
+		.commandValue = disk_block << 8 |
+				(is_write ? WRITEBLK : READBLK),
+	};
+	ssi_payload_t command_payload = {
+		.service_code = DOIO,
+		.arg = &command_doio,
+	};
+
+	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb,
+		(unsigned int)(&command_payload), 0);
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&status),
 		0);
 
 	if (status != 1)
-		trap_handler(NULL); // TODO : CHANGE!!!
-
-	do_io.commandAddr = command_addr;
-	do_io.commandValue = disk_block << 8 | (is_write ? WRITEBLK : READBLK);
-
-	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&payload),
-		0);
-	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)(&status),
-		0);
-
-	if (status != 1)
-		trap_handler(NULL);
+		trap_handler();
 }

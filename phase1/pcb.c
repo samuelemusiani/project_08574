@@ -240,7 +240,7 @@ pcb_t *outProcQForIO(struct list_head *head, pcb_t *p)
 	{
 		pcb_t *tmp = container_of(iter, pcb_t, p_io);
 		if (tmp == p) {
-			list_del(&tmp->p_list);
+			list_del(&tmp->p_io);
 			a = tmp;
 		}
 	}

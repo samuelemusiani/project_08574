@@ -145,6 +145,15 @@ static void do_io(pcb_t *sender, ssi_do_io_t *p)
 	int n = comm_add_to_number((unsigned int)p->commandAddr);
 	sender->do_io = 1;
 
+	// We cannot add the same process to the same list twice without
+	// removing it first. Some devices have non-interrupt commands, so when
+	// a process writes to them it does not expect a response. We could
+	// check each requested service and mark those that do not generate an
+	// interrupt in order to not add the process to the IO queue. But since
+	// this project does not implement asynchronous IO we could simply
+	// remove a process for the queue if it requests another IO to the same
+	// device.
+	outProcQForIO(&pcb_blocked_on_device[n], sender);
 	insertProcQForIO(&pcb_blocked_on_device[n], sender);
 	*(p->commandAddr) = p->commandValue;
 }

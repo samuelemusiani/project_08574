@@ -29,9 +29,10 @@ void test()
 	// TODO: Launch a proc for every I/O device. This is optional and we can
 	// do it later
 	// Create 8 sst
-	for (int i = 1; i <= 1 /* 8 */; i++) {
+	for (int i = 1; i <= 8; i++) {
 		state_t tmpstate;
 		STST(&tmpstate);
+		tmpstate.entry_hi = i << ASIDSHIFT;
 		tmpstate.reg_sp = mutexstate.reg_sp - QPAGE * i; // ??
 		tmpstate.pc_epc = (memaddr)sst;
 		tmpstate.status |= MSTATUS_MPP_M | MSTATUS_MIE_BIT; // ???
@@ -55,13 +56,20 @@ void test()
 
 		support_table[i - 1].sup_asid = i;
 
+		// We put every entryHI at 0 in oderder to mark which one is
+		// used. So we can have more stack pages
+		for (int j = 0; j < MAXPAGES; j++) {
+			support_table[i - 1].sup_privatePgTbl[j].pte_entryHI =
+				0;
+		}
+
 		sst_pcbs[i - 1] = p_create(&tmpstate, &support_table[i - 1]);
 	}
 
 	// Other 7...
 
 	// Wait for sst messages when terminated
-	for (int i = 0; i < 1 /* 8 */; i++) {
+	for (int i = 0; i < 8; i++) {
 		SYSCALL(RECEIVEMESSAGE, ANYMESSAGE, 0, 0);
 	}
 
