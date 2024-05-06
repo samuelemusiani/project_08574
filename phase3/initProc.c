@@ -56,6 +56,13 @@ void test()
 
 		support_table[i - 1].sup_asid = i;
 
+		// We put every entryHI at 0 in oderder to mark which one is
+		// used. So we can have more stack pages
+		for (int j = 0; j < MAXPAGES; j++) {
+			support_table[i - 1].sup_privatePgTbl[j].pte_entryHI =
+				0;
+		}
+
 		sst_pcbs[i - 1] = p_create(&tmpstate, &support_table[i - 1]);
 	}
 

@@ -48,12 +48,25 @@ void mutex_proc()
 int find_page_by_entryhi(unsigned int entry_hi)
 {
 	unsigned int tmp = entry_hi >> VPNSHIFT;
-	memaddr missing_page = (tmp - 0x80000) / PAGESIZE;
-	if (tmp == 0xBFFFF) { // (0xC0000000 - PAGESIZE)>> 12
-		missing_page = 31;
+	unsigned int missing_page = -2;
+	if (tmp > 0x80000 + PAGESIZE * MAXPAGES) { // Stack page
+		missing_page = 31 + (0xBFFFF - tmp);
+	} else { // Program page
+		missing_page = (tmp - 0x80000);
 	}
 
 	return missing_page;
+}
+
+int seek_entryhi_index_on_pagetable(unsigned int entry_hi, support_t *s)
+{
+	for (int i = 0; i < MAXPAGES; i++) {
+		if (s->sup_privatePgTbl[i].pte_entryHI == 0 ||
+		    s->sup_privatePgTbl[i].pte_entryHI == entry_hi) {
+			return i;
+		}
+	}
+	return -1; // no page left
 }
 
 void tlb_handler()
@@ -120,21 +133,31 @@ void tlb_handler()
 
 	// Read the contents of the Current Process’s backing
 	// store/flash device logical page p into frame i
+	//
+	// We should check as this is no always needed. If
+	// it's the first time we access a stack page there
+	// is nothing to load.
 	read_write_flash(ram_addr, missing_page, asid, 0);
+
+	unsigned int page_index = seek_entryhi_index_on_pagetable(
+		s->sup_exceptState[PGFAULTEXCEPT].entry_hi, s);
+	if (page_index == -1) {
+		trap_handler(); // No page left, trap needed
+	}
 
 	swap_pool_table[frame_i].sw_asid = asid;
 	swap_pool_table[frame_i].sw_pageNo = missing_page;
-	swap_pool_table[frame_i].sw_pte = &s->sup_privatePgTbl[missing_page];
+	swap_pool_table[frame_i].sw_pte = &s->sup_privatePgTbl[page_index];
 
 	// Disable interrupts
 	status_IT = getSTATUS();
 	setSTATUS(status_IT & ~(1 << 3));
 
 	// Update the page table of the process
-	s->sup_privatePgTbl[missing_page].pte_entryHI =
+	s->sup_privatePgTbl[page_index].pte_entryHI =
 		s->sup_exceptState[PGFAULTEXCEPT].entry_hi;
-	s->sup_privatePgTbl[missing_page].pte_entryLO = (ram_addr & ~(0xFFF)) |
-							VALIDON | DIRTYON;
+	s->sup_privatePgTbl[page_index].pte_entryLO = (ram_addr & ~(0xFFF)) |
+						      VALIDON | DIRTYON;
 
 	// Update the TLB, now we just clear the TLB
 	// update_tlb(&s->sup_privatePgTbl[missing_page])??
