@@ -110,7 +110,7 @@ void tlb_handler()
 		setSTATUS(status_IT & ~(1 << 3));
 
 		// Mark the page as invalid
-		swap_pool_table[frame_i].sw_pte->pte_entryLO &= ~VALIDON;
+		swap_pool_table[frame_i].sw_pte->pte_entryLO = 0;
 
 		// TODO: Update the TLB
 		// we need to check if the page is in the TLB and to update it
