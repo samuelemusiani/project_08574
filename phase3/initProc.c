@@ -29,7 +29,7 @@ void test()
 	// TODO: Launch a proc for every I/O device. This is optional and we can
 	// do it later
 	// Create 8 sst
-	for (int i = 1; i <= 1 /* 8 */; i++) {
+	for (int i = 1; i <= 8; i++) {
 		state_t tmpstate;
 		STST(&tmpstate);
 		tmpstate.entry_hi = i << ASIDSHIFT;
@@ -62,7 +62,7 @@ void test()
 	// Other 7...
 
 	// Wait for sst messages when terminated
-	for (int i = 0; i < 1 /* 8 */; i++) {
+	for (int i = 0; i < 8; i++) {
 		SYSCALL(RECEIVEMESSAGE, ANYMESSAGE, 0, 0);
 	}
 

@@ -34,7 +34,7 @@ void uTLB_RefillHandler()
 	setENTRYHI(ehi);
 
 	if (i == MAXPAGES) {
-		setENTRYLO(~VALIDON);
+		setENTRYLO(0);
 	} else {
 		unsigned int elo =
 			current_process->p_supportStruct->sup_privatePgTbl[i]
