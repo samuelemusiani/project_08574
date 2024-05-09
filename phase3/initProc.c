@@ -9,6 +9,13 @@ support_t support_table[UPROCMAX];
 
 void test()
 {
+	// FULL clear of TLB
+	TLBCLR();
+	setENTRYHI(0);
+	setENTRYLO(0);
+	setINDEX(0);
+	TLBWI();
+
 	initSwapStructs();
 
 	// Init mutex process
