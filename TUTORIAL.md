@@ -13,7 +13,7 @@ $ sudo apt-get install autoconf automake autotools-dev curl python3 python3-pip 
 
 For Archlinux:
 ```bash
-$ sudo pacman -Syyu autoconf automake curl python3 libmpc mpfr gmp gawk base-devel bison flex texinfo gperf libtool patchutils bc zlib expat
+$ sudo pacman -Syyu autoconf automake curl python3 libmpc mpfr gmp gawk base-devel bison flex texinfo gperf libtool patchutils bc zlib expat git
 ```
 
 Build the toolchain:
