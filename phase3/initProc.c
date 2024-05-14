@@ -77,7 +77,9 @@ void test()
 
 	// Wait for sst messages when terminated
 	for (int i = 0; i < 8; i++) {
-		SYSCALL(RECEIVEMESSAGE, ANYMESSAGE, 0, 0);
+		pcb_t *s = (pcb_t *)SYSCALL(RECEIVEMESSAGE, ANYMESSAGE, 0, 0);
+		mark_free_pages(s->p_supportStruct->sup_asid);
+		// freePcb(s); TODO: NON WORKA :)
 	}
 
 	p_term(mutex_pcb);

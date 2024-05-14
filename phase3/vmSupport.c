@@ -241,3 +241,17 @@ static void read_write_flash(memaddr ram_address, unsigned int disk_block,
 	if (status != 1)
 		trap_handler();
 }
+
+void mark_free_pages(unsigned int asid)
+{
+	unsigned int status_IT = getSTATUS();
+	setSTATUS(status_IT & ~(1 << 3));
+
+	for (int i = 0; i < POOLSIZE; i++) {
+		if (swap_pool_table[i].sw_asid == asid)
+			swap_pool_table[i].sw_asid = NOPROC;
+	}
+
+	setSTATUS(status_IT);
+	return;
+}

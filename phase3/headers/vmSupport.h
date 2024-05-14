@@ -24,5 +24,6 @@ typedef union mutex_payload_t {
 void initSwapStructs();
 void mutex_proc();
 void tlb_handler();
+void mark_free_pages(unsigned int asid);
 
 #endif
