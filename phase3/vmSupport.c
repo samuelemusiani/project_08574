@@ -3,8 +3,6 @@
 #include "headers/initProc.h"
 #include "headers/sysSupport.h"
 
-extern pcb_t *ssi_pcb;
-
 // La swap pool table è un array di swap_t entries
 swap_t swap_pool_table[POOLSIZE];
 
@@ -48,7 +46,7 @@ void mutex_proc()
 int find_page_by_entryhi(unsigned int entry_hi)
 {
 	unsigned int tmp = entry_hi >> VPNSHIFT;
-	unsigned int missing_page = -2;
+	unsigned int missing_page;
 	if (tmp > 0x80000 + PAGESIZE * MAXPAGES) { // Stack page
 		missing_page = 31 + (0xBFFFF - tmp);
 	} else { // Program page
@@ -133,7 +131,7 @@ void tlb_handler()
 	// store/flash device logical page p into frame i
 	//
 	// We should check as this is no always needed. If
-	// it's the first time we access a stack page there
+	// it's the first time we've accessed a stack page, there
 	// is nothing to load.
 	read_write_flash(ram_addr, missing_page, asid, 0);
 
@@ -202,7 +200,7 @@ void update_tlb(pteEntry_t *pte)
 }
 */
 
-// PandOS replacement algorithm round robin
+// PandOS replacement algorithm round-robin
 static size_tt getFrameIndex()
 {
 	// Cerco un frame libero

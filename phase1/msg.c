@@ -15,7 +15,7 @@ void freeMsg(msg_t *m)
 
 /*
  * Return NULL if the msgFree list is empty. Otherwise, remove an element from
- * the msgFree list, provide initial values for ALL of the messages fields and
+ * the msgFree list, provide initial values for ALL the messages' fields and
  * then return a pointer to the removed element. Messages get reused, so it is
  * important that no previous value persist in a message when it gets
  * reallocated.
@@ -106,7 +106,7 @@ void pushMessage(struct list_head *head, msg_t *m)
  * Remove the first element (starting by the head) from the message queue
  * accessed via head whose sender is p_ptr. If p_ptr is NULL, return the first
  * message in the queue. Return NULL if the message queue was empty or if no
- * message from p ptr was found; otherwise return the pointer to the removed
+ * message from p ptr was found; otherwise, return the pointer to the removed
  * message.
  */
 msg_t *popMessage(struct list_head *head, pcb_t *p_ptr)

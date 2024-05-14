@@ -7,9 +7,9 @@ static void load_state(state_t *s);
 
 /*
  * The scheduler is responsible for selecting the next process to dispatch. If
- * the current process is not NULL the scheduler dispatches the current process,
- * otherwise it will check the state of the ready queue in order to select the
- * next one.
+ * the current process is not NULL, the scheduler dispatches the current
+ * process; otherwise it will check the state of the ready queue in order to
+ * select the next one.
  */
 void scheduler()
 {
@@ -36,7 +36,7 @@ void scheduler()
 			setSTATUS(1 << MSTATUS_MIE_BIT);
 			WAIT();
 		} else {
-			// If there are no soft blocked processes, the function
+			// If there are no soft-blocked processes, the function
 			// panics and indicates a deadlock.
 			PANIC();
 		}
@@ -47,13 +47,13 @@ void scheduler()
 }
 
 /*
- * The scheduler only select the process to dispatch, the actual load is done
- * by this function
+ * The scheduler only selects the process to dispatch, this function does the
+ * actual load *
  */
 static void load_state(state_t *s)
 {
 	setTIMER(TIMESLICE * (*((cpu_t *)TIMESCALEADDR)));
-	// Get current TOD timer value and store in the global variable
+	// Get the current TOD timer value and store in the global variable
 	// tod_timer
 	STCK(tod_timer);
 	LDST(s);

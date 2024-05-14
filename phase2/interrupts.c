@@ -21,8 +21,8 @@ void interrupt_handler()
 	// Three types of interrupts: timer, cpu timer, and devices
 	unsigned int mip = getMIP();
 
-	// interr has 0 in all bits except in the 3rd, 7th, 17-21th bits
-	// 5 types of device from 17 to 21
+	// interr has 0 in all bits except in the 3rd, 7th, 17th-21st bits
+	// 5 types of devices, from 17 to 21
 	unsigned int interr = 1 << IL_TIMER | 1 << IL_CPUTIMER |
 			      31 << DEV_IL_START;
 
@@ -66,7 +66,7 @@ static void device_interrupt_handler(unsigned int iln)
 	 */
 	int bitmap = *(char *)CDEV_BITMAP_ADDR(iln);
 	int dev_n = 0;
-	// The folling code is needed as the current version of uriscv have a
+	// The following code is needed as the current version of uriscv has a
 	// bug on the instruction !(bitmap & (1 << dev_n))
 	int tmp1 = bitmap & (1 << dev_n);
 	int cond = !tmp1;
@@ -134,7 +134,7 @@ static void device_interrupt_handler(unsigned int iln)
 	 * Avoiding syscall because it would generate an exception and
 	 * ovveride the Nucleous stack memory.
 	 * The payload is not a pointer, but an unsigned int that stores all the
-	 * informations that the SSI will need. A pointer is avoided because
+	 * information that the SSI will need. A pointer is avoided because
 	 * it would point to an address in the interrupt handler function
 	 * that could be overwritten by the next interrupt.
 	 */
@@ -143,8 +143,8 @@ static void device_interrupt_handler(unsigned int iln)
 
 /*
  * Every 5ms the PLT raises an interrupt
- * The function save the state of the current process
- * and put it in the ready queue
+ * The function saves the state of the current process
+ * and puts it in the ready queue
  */
 static void plt_interrupt_handler()
 {

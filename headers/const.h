@@ -199,8 +199,8 @@ corresponding to IP
 /umps3/umps/arch.h line 68)
  * So the function allows us to go and check for each device which of them is
 working.
- * If a device is running CAUSE_IP_GET returns 1, 0 otherwise.
- * As requested by chapter 3.4 exception 0 we call the interrupt of the first
+ * If a device is running, CAUSE_IP_GET returns 1, 0 otherwise.
+ * As requested by chapter 3.4 exception 0, we call the interrupt of the first
 device
  * that we find "on" / "running" / "of which we get 1 from this function"
 */

@@ -65,7 +65,7 @@ int main(void)
 	// kernel mode
 	ssi_pcb_real->p_s.status = KERNELMODE | INTERRUPTS_ENBALED;
 	ssi_pcb_real->p_s.mie = MIE_ALL;
-	// the SP set to RAMTOP (i.e., use the last RAM frame for its stack)
+	// the SP set to RAMTOP (i.e. use the last RAM frame for its stack)
 	RAMTOP(ssi_pcb_real->p_s.reg_sp);
 	// PC set to the address of ssi() function.
 	ssi_pcb_real->p_s.pc_epc = (memaddr)ssi;

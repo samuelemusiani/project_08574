@@ -4,7 +4,7 @@
 #include "headers/sst.h"
 #include "headers/utils3.h"
 
-pcb_PTR mutex_pcb, sst1;
+pcb_PTR mutex_pcb;
 support_t support_table[UPROCMAX];
 
 void test()
