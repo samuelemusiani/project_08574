@@ -2,6 +2,7 @@
 #include "headers/utils3.h"
 #include "headers/initProc.h"
 #include "headers/sysSupport.h"
+#include <uriscv/liburiscv.h>
 
 // La swap pool table è un array di swap_t entries
 swap_t swap_pool_table[POOLSIZE];
@@ -12,6 +13,7 @@ static size_tt getFrameIndex();
 static void read_write_flash(memaddr ram_address, unsigned int disk_block,
 			     unsigned int asid, int is_write);
 static int isFrameFree(swap_t *frame);
+static void update_tlb(pteEntry_t *pte);
 
 void initSwapStructs()
 {
@@ -114,7 +116,7 @@ void tlb_handler()
 		// we need to check if the page is in the TLB and to update it
 		// instead of clearing of TLB I made the function update_tlb but
 		// for now we just clear the TLB
-		TLBCLR();
+		update_tlb(swap_pool_table[frame_i].sw_pte);
 
 		// Enable interrupts
 		setSTATUS(status_IT);
@@ -155,9 +157,7 @@ void tlb_handler()
 	s->sup_privatePgTbl[page_index].pte_entryLO = (ram_addr & ~(0xFFF)) |
 						      VALIDON | DIRTYON;
 
-	// Update the TLB, now we just clear the TLB
-	// update_tlb(&s->sup_privatePgTbl[missing_page])??
-	TLBCLR();
+	update_tlb(&s->sup_privatePgTbl[page_index]);
 
 	// Enable interrupts
 	setSTATUS(status_IT);
@@ -175,30 +175,15 @@ static int isFrameFree(swap_t *frame)
 	return frame->sw_asid == -1;
 }
 
-/*
-// We should use this function to update the TLB as explained in the specs
-// PLEASE CHECK ME BEFORE USAGE
-void update_tlb(pteEntry_t *pte)
+static void update_tlb(pteEntry_t *pte)
 {
-	// imposto in EntryHI CP0 il valore da cercare nel TLB
 	setENTRYHI(pte->pte_entryHI);
-	// TLB probe command that searches for the entry in the TLB
 	TLBP();
-
-	// Se l'entry è presente nel TLB (Index.P == 0), la aggiorno
-	if (getINDEX() == 0) {
-		// To modify the content of the TLB, we need to write value into
-		// the CP0 registers
-		setENTRYHI(pte->pte_entryHI);
+	if (!(getINDEX() & PRESENTFLAG)) {
 		setENTRYLO(pte->pte_entryLO);
-		// TLB write index command that writes the entry in the correct
-		// TLB index
 		TLBWI();
-	} else {
-		PANIC();
 	}
 }
-*/
 
 // PandOS replacement algorithm round-robin
 static size_tt getFrameIndex()
