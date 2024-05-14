@@ -68,11 +68,8 @@ void *memcpy(void *dest, const void *src, unsigned int len)
  */
 int hash_from_device_type_number(int type, int number, int transm)
 {
-	if (type == EXT_IL_INDEX(IL_TERMINAL)) {
-		if (transm > 0) {
-			type++;
-		}
-	}
+	if (type == EXT_IL_INDEX(IL_TERMINAL))
+		type += !!transm;
 
 	return type * N_DEV_PER_IL + number;
 }
