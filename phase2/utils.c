@@ -68,8 +68,11 @@ void *memcpy(void *dest, const void *src, unsigned int len)
  */
 int hash_from_device_type_number(int type, int number, int transm)
 {
-	if (type == EXT_IL_INDEX(IL_TERMINAL))
-		type += !!transm;
+	if (type == EXT_IL_INDEX(IL_TERMINAL)) {
+		if (transm > 0) {
+			type++;
+		}
+	}
 
 	return type * N_DEV_PER_IL + number;
 }
@@ -80,18 +83,12 @@ int hash_from_device_type_number(int type, int number, int transm)
  */
 int comm_add_to_number(memaddr command_addr)
 {
-	int tmp = ((command_addr - (command_addr % 4)) - DEV_REG_START) /
-		  DEV_REG_SIZE;
-	// BUG: This should be tmp / 8. But il_number returns zero
-	int il_number = tmp / 8; // Start from zero
-	int dev_number = tmp - il_number * N_DEV_PER_IL;
+	unsigned int tmp1 = (command_addr - DEV_REG_START) / DEV_REG_SIZE;
+	unsigned int il_number = tmp1 / N_DEV_PER_IL;
+	unsigned int dev_number = tmp1 - (il_number * N_DEV_PER_IL);
 
-	int transm = 0;
-	if (dev_number == EXT_IL_INDEX(IL_TERMINAL)) {
-		transm = !!(command_addr - DEV_REG_ADDR(il_number, dev_number));
-	}
-
-	return hash_from_device_type_number(il_number, dev_number, transm);
+	int n = hash_from_device_type_number(il_number, dev_number, 1);
+	return n;
 }
 
 // This function is used to update the cpu time of the current process

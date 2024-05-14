@@ -32,7 +32,7 @@ void ssi()
 				answer_do_io(msg.fields.device_type,
 					     msg.fields.device_number &
 						     DEVICE_TYPE_MASK,
-					     msg.fields.device_type &
+					     msg.fields.device_number &
 						     SUBTERMINAL_TYPE,
 					     msg.fields.status);
 				break;

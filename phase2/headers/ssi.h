@@ -12,10 +12,10 @@
 
 #define INTERRUPT_HANDLER_MSG 0x1 // Fake address for interrupt handler
 
-#define SUBTERMINAL_TRANSM 0 << 7
-#define SUBTERMINAL_RECV 1 << 7
-#define SUBTERMINAL_TYPE SUBTERMINAL_RECV
-#define DEVICE_TYPE_MASK ~(SUBTERMINAL_RECV)
+#define SUBTERMINAL_TRANSM 1 << 7
+#define SUBTERMINAL_RECV 0 << 7
+#define SUBTERMINAL_TYPE SUBTERMINAL_TRANSM
+#define DEVICE_TYPE_MASK ~(SUBTERMINAL_TRANSM)
 
 // In order to send a message from the interrupt handler to the SSI we need
 // to use the 32-bit payload in a creative way.
