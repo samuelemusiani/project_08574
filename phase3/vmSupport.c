@@ -112,16 +112,10 @@ void tlb_handler()
 		// Mark the page as invalid
 		swap_pool_table[frame_i].sw_pte->pte_entryLO = 0;
 
-		// TODO: Update the TLB
-		// we need to check if the page is in the TLB and to update it
-		// instead of clearing of TLB I made the function update_tlb but
-		// for now we just clear the TLB
 		update_tlb(swap_pool_table[frame_i].sw_pte);
 
 		// Enable interrupts
 		setSTATUS(status_IT);
-
-		// TODO: Check for stack pointer?
 
 		// Write the contents of frame i to the correct location on
 		// process x’s backing store/flash device

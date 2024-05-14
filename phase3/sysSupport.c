@@ -77,5 +77,5 @@ static void syscall_handler(support_t *support)
 		break;
 	}
 	s->pc_epc += 4;
-	LDST(s); // TODO: Should we really do this?
+	LDST(s);
 }
