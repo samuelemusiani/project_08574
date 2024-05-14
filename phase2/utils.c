@@ -84,7 +84,13 @@ int comm_add_to_number(memaddr command_addr)
 	unsigned int il_number = tmp1 / N_DEV_PER_IL;
 	unsigned int dev_number = tmp1 - (il_number * N_DEV_PER_IL);
 
-	int n = hash_from_device_type_number(il_number, dev_number, 1);
+	memaddr tmp2 = (memaddr) &
+		       ((devreg_t *)DEV_REG_ADDR(il_number + 17, dev_number))
+			       ->term.recv_command;
+
+	int transm = (command_addr - tmp2) != 0;
+
+	int n = hash_from_device_type_number(il_number, dev_number, transm);
 	return n;
 }
 
