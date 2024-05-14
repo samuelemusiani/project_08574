@@ -32,7 +32,7 @@ $ sudo apt install git build-essential libc6 cmake libelf-dev libboost-dev libbo
 
 For Archlinux:
 ```bash
-$ sudo pacman -S boost boost-libs
+$ sudo pacman -S boost boost-libs cmake libsigc++
 ```
 
 ### Compiling e installing the emulator
