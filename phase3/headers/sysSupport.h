@@ -10,7 +10,6 @@
 
 #include <uriscv/liburiscv.h>
 
-extern pcb_PTR ssi_pcb;
 extern void trap_handler();
 
 void send_message_to_ssi(unsigned int payload);

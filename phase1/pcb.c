@@ -4,8 +4,8 @@
 /*
  * Every function that manipulates a queue must be executed with interrupts
  * disabled. This because both the ssi and the nucleus access the ready queue.
- * If a PLT happend during the insert of a process in the ready queue by the
- * ssi, the queue will be corrupted. So every function in this file have
+ * If a PLT occurs during the insert of a process in the ready queue by the
+ * ssi, the queue will be corrupted. So every function in this file has
  * interrupt disabled. In fact, every function begins and ends in the same
  * manner:
  * unsigned int status = getSTATUS();
@@ -29,9 +29,9 @@ void freePcb(pcb_t *p)
 
 /*
  * Return NULL if the pcbFree list is empty. Otherwise, remove an element from
- * the pcbFree list, provide initial values for ALL of the PCBs fields (i.e.
+ * the pcbFree list, provide initial values for ALL the PCBs fields (i.e.
  * NULL and/or 0) and then return a pointer to the removed element. PCBs get
- * reused, so it is important that no previous value persist in a PCB when it
+ * reused, so it is important that no previous value persists in a PCB when it
  * gets reallocated
  */
 pcb_t *allocPcb()

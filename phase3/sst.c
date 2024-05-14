@@ -97,7 +97,7 @@ static void write(sst_print_t *write_payload, unsigned int asid,
 
 void sst()
 {
-	// get the support structure from the ssi. This is the same for the
+	// Get the support structure from the ssi. This is the same for the
 	// child process
 	ssi_payload_t getsupportdata = { .service_code = GETSUPPORTPTR,
 					 .arg = NULL };

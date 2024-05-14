@@ -63,8 +63,8 @@ void *memcpy(void *dest, const void *src, unsigned int len)
  * Device type: type = [0..4]
  * Interrupt line: number = [0..7]
  *
- * transm is used when the device is a terminal. If 1 it indicates that the
- * subterminal is the transmittion one.
+ * Variable transm is used when the device is a terminal. If 1, it indicates
+ * that the subterminal is the transmittion one.
  */
 int hash_from_device_type_number(int type, int number, int transm)
 {

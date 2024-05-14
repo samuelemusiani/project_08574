@@ -17,12 +17,12 @@
 #define SUBTERMINAL_TYPE SUBTERMINAL_TRANSM
 #define DEVICE_TYPE_MASK ~(SUBTERMINAL_TRANSM)
 
-// In order to send a message from the interrupt handler to the SSI we need
+// In order to send a message from the interrupt handler to the SSI, we need
 // to use the 32-bit payload in a creative way.
 typedef union interrupt_handler_io_msg {
 	struct {
 		char service;	    // 0 doio, 1 clock
-		char status;	    // Status of device
+		char status;	    // Status of the device
 		char device_type;   // Device type {0..4}
 		char device_number; // Interrupt line {0..6}
 	} fields;

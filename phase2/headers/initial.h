@@ -18,10 +18,10 @@ extern struct list_head ready_queue;
 extern pcb_t *current_process;
 
 /*
- * uriscv supports five different classes of external devices: disk, tape,
+ * uRISCV supports five different classes of external devices: disk, tape,
  * network card, printer, and terminal. Furthermore, μRISCV can support up to
  * eight instances of each device type.
- * Terminal devices are actually two independent sub-devices,
+ * Terminal devices are actually two independent sub-devices
  */
 #define MAXDEVICE ((N_EXT_IL + 1) * N_DEV_PER_IL) // (5 + 1) * 8 = 48
 

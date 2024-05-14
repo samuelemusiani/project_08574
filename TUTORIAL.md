@@ -35,7 +35,7 @@ For Archlinux:
 $ sudo pacman -S boost boost-libs cmake libsigc++
 ```
 
-### Compiling e installing the emulator
+### Compiling and installing the emulator
 ```bash 
 $ wget http://www.cs.unibo.it/~renzo/so/MicroPandOS/uriscv.tar.gz && tar -xf uriscv.tar.gz && cd uriscv
 $ mkdir -p build && cd build
@@ -89,5 +89,5 @@ paths if they are correct)
 toolchain. If you installed the toolchain in `/opt/riscv` you can lounch it with
 `/opt/riscv/bin/riscv32-unknown-linux-gnu-gdb kernel`. Please provide the 
 executable compiled with the Makefile as the argument to gdb
-4. Once gdb has started you need to attach to the debug server by typing: 
+3. Once gdb has started you need to attach to the debug server by typing: 
 `target remote localhost:8080`

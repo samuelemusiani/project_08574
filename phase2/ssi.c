@@ -147,10 +147,10 @@ static void do_io(pcb_t *sender, ssi_do_io_t *p)
 
 	// We cannot add the same process to the same list twice without
 	// removing it first. Some devices have non-interrupt commands, so when
-	// a process writes to them it does not expect a response. We could
+	// a process writes to them, it does not expect a response. We could
 	// check each requested service and mark those that do not generate an
 	// interrupt in order to not add the process to the IO queue. But since
-	// this project does not implement asynchronous IO we could simply
+	// this project does not implement asynchronous IO, we could simply
 	// remove a process for the queue if it requests another IO to the same
 	// device.
 	outProcQForIO(&pcb_blocked_on_device[n], sender);
@@ -198,8 +198,8 @@ static void answer_do_io(int device_type, int device_number, int transm,
 	int tmp = hash_from_device_type_number(device_type, device_number,
 					       transm);
 	pcb_t *dest = removeProcQForIO(&pcb_blocked_on_device[tmp]);
-	// Send hack only if there is a process waiting. If the process was
-	// terminated do nothing
+	// Send hack only if there is a process waiting. If the process is
+	// terminated, do nothing
 	if (dest)
 		SYSCALL(SENDMESSAGE, (unsigned int)dest, status, 0);
 }

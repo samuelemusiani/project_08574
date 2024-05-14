@@ -76,7 +76,7 @@ static void syscall_handler()
 {
 	if ((getCAUSE() & GETEXECCODE) == 8) {
 		/*
-		 * On uMPS3 we should generate fake trap with a reserverd code
+		 * On uMPS3 we should generate a fake trap with a reserverd code
 		 * of PRIVINSTR that has value 10. In uRISCV this is not needed
 		 * as a paricular code is used for SYS in user mode (8).
 		 */
@@ -155,7 +155,7 @@ static void blockSys()
 static void deliver_message(state_t *p, msg_t *msg)
 {
 	// When returning form SYS2, the return value (sender of msg)
-	// need to be saved in the reg_a0
+	// needs to be saved in the reg_a0
 	p->reg_a0 = (unsigned int)msg->m_sender;
 	pcb_t *tmp_sender = msg->m_sender;
 	if (tmp_sender == ssi_pcb_real)
@@ -188,7 +188,7 @@ static int is_waiting_for_me(pcb_t *sender, pcb_t *dest)
 
 /*
  * This function sends a message to the specified destination process.
- * If the process whas blocked on a SYS2 it will be unblocked.
+ * If the process is blocked on a SYS2, it will be unblocked.
  */
 static unsigned int send_message(pcb_t *dest, unsigned int payload,
 				 pcb_t *sender)
