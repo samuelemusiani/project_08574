@@ -3,9 +3,9 @@
 #include "headers/sysSupport.h"
 #include "headers/sst.h"
 #include "headers/utils3.h"
+#include "headers/support.h"
 
 pcb_PTR mutex_pcb;
-support_t support_table[UPROCMAX];
 
 void test()
 {
@@ -17,6 +17,7 @@ void test()
 	TLBWI();
 
 	initSwapStructs();
+	initSupports();
 
 	// Init mutex process
 	state_t mutexstate;
@@ -28,9 +29,8 @@ void test()
 	// QPAGE may be too small?
 	mutexstate.pc_epc = (memaddr)mutex_proc;
 	mutexstate.status = MSTATUS_MPP_M; // ??? Forse or |=? Interrupt
-					   // abilitati?
-
-	// mutexstate.mie = MIE_ALL;
+					   // abilitati? mutexstate.mie =
+					   // MIE_ALL;
 	mutex_pcb = p_create(&mutexstate, NULL);
 
 	// TODO: Launch a proc for every I/O device. This is optional and we can
@@ -46,31 +46,24 @@ void test()
 		// In order to use SYSCALLS, SST need to be in kernel mode (?)
 		tmpstate.mie = MIE_ALL;
 
-		support_table[i - 1].sup_asid = i;
+		support_t *s = allocSupport();
+
+		s->sup_asid = i;
 		// PGFAULTEXCEPT
 		context_t tmp = { .stackPtr =
-					  (unsigned int)&support_table[i - 1]
-						  .sup_stackTLB[499],
+					  (unsigned int)&s->sup_stackTLB[499],
 				  .status = MSTATUS_MPP_M | MSTATUS_MIE_BIT,
 				  .pc = (memaddr)tlb_handler };
-		support_table[i - 1].sup_exceptContext[PGFAULTEXCEPT] = tmp;
+		s->sup_exceptContext[PGFAULTEXCEPT] = tmp;
 
 		// GENERALEXCEPT
-		tmp.stackPtr =
-			(unsigned int)&support_table[i - 1].sup_stackGen[499];
+		tmp.stackPtr = (unsigned int)&s->sup_stackGen[499];
 		tmp.pc = (memaddr)general_exception_handler;
-		support_table[i - 1].sup_exceptContext[GENERALEXCEPT] = tmp;
+		s->sup_exceptContext[GENERALEXCEPT] = tmp;
 
-		support_table[i - 1].sup_asid = i;
+		s->sup_asid = i;
 
-		// We put every entryHI at 0 in oderder to mark which one is
-		// used. So we can have more stack pages
-		for (int j = 0; j < MAXPAGES; j++) {
-			support_table[i - 1].sup_privatePgTbl[j].pte_entryHI =
-				0;
-		}
-
-		sst_pcbs[i - 1] = p_create(&tmpstate, &support_table[i - 1]);
+		sst_pcbs[i - 1] = p_create(&tmpstate, s);
 	}
 
 	// Other 7...

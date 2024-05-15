@@ -1,5 +1,6 @@
 #include "headers/utils.h"
 #include "headers/initial.h"
+#include "../phase3/headers/support.h"
 
 #include <uriscv/arch.h>
 
@@ -42,6 +43,8 @@ void terminate_process(pcb_t *p)
 		terminate_process(container_of(p->p_child.next, pcb_t, p_sib));
 	}
 
+	if (p->p_supportStruct)
+		freeSupport(p->p_supportStruct);
 	freePcb(p);
 }
 
