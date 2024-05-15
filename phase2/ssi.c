@@ -142,6 +142,7 @@ static void _terminate_process(pcb_t *sender, pcb_t *p)
 
 static void do_io(pcb_t *sender, ssi_do_io_t *p)
 {
+	setSTATUS(getSTATUS() & ~(1 << 3));
 	int n = comm_add_to_number((unsigned int)p->commandAddr);
 	sender->do_io = 1;
 
@@ -202,6 +203,8 @@ static void answer_do_io(int device_type, int device_number, int transm,
 	// terminated, do nothing
 	if (dest)
 		SYSCALL(SENDMESSAGE, (unsigned int)dest, status, 0);
+
+	setSTATUS(getSTATUS() | (1 << 3));
 }
 
 static void answer_wait_for_clock()
