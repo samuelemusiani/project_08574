@@ -6,6 +6,8 @@
 #include <uriscv/liburiscv.h>
 #include <uriscv/types.h>
 
+#define PARENT 0
+
 static void syscall_handler(support_t *support);
 
 void general_exception_handler()
@@ -36,6 +38,7 @@ void trap_handler()
 	// terminate process
 	mutex_payload_t p = { .fields.v = 1 };
 	SYSCALL(SENDMESSAGE, (unsigned int)mutex_pcb, p.payload, 0);
+	SYSCALL(SENDMESSAGE, PARENT, 0, 0);
 	p_term(SELF);
 }
 
