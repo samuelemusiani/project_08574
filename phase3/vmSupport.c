@@ -6,6 +6,7 @@
 
 // La swap pool table è un array di swap_t entries
 swap_t swap_pool_table[POOLSIZE];
+unsigned int text_pages[UPROCMAX];
 
 memaddr swap_pool;
 
@@ -23,6 +24,18 @@ void initSwapStructs()
 	for (int i = 0; i < POOLSIZE; i++) {
 		swap_pool_table[i].sw_asid = NOPROC;
 	}
+}
+
+// This function reads the number of pages required for
+// the .text area of a u-proc
+static unsigned int number_of_pages_for_text(unsigned int a)
+{
+	return *((unsigned int *)(a + 0x014)) / PAGESIZE;
+}
+
+static int need_dirty(unsigned int asid, unsigned int missing_page)
+{
+	return (text_pages[asid - 1] - 1) < missing_page;
 }
 
 // Processo mutex
@@ -130,6 +143,9 @@ void tlb_handler()
 	// it's the first time we've accessed a stack page, there
 	// is nothing to load.
 	read_write_flash(ram_addr, missing_page, asid, 0);
+	if (missing_page == 0) {
+		text_pages[asid - 1] = number_of_pages_for_text(ram_addr);
+	}
 
 	unsigned int page_index = seek_entryhi_index_on_pagetable(
 		s->sup_exceptState[PGFAULTEXCEPT].entry_hi, s);
@@ -148,8 +164,9 @@ void tlb_handler()
 	// Update the page table of the process
 	s->sup_privatePgTbl[page_index].pte_entryHI =
 		s->sup_exceptState[PGFAULTEXCEPT].entry_hi;
-	s->sup_privatePgTbl[page_index].pte_entryLO = (ram_addr & ~(0xFFF)) |
-						      VALIDON | DIRTYON;
+	s->sup_privatePgTbl[page_index].pte_entryLO =
+		(ram_addr & ~(0xFFF)) | VALIDON |
+		(need_dirty(asid, missing_page) ? DIRTYON : 0);
 
 	update_tlb(&s->sup_privatePgTbl[page_index]);
 
