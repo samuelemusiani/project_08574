@@ -19,7 +19,7 @@ void general_exception_handler()
 
 	support_t *support;
 	SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb, (unsigned int)&support,
-		0); // TODO: Check return code
+		0);
 
 	state_t *s = &support->sup_exceptState[GENERALEXCEPT];
 	unsigned int excCode = s->cause;
