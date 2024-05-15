@@ -237,4 +237,6 @@ device
 // p.130
 #define INTERRUPTS_ENBALED (1 << MSTATUS_MPIE_BIT) // Not shure
 
+#define PARENT 0
+
 #endif

@@ -4,9 +4,6 @@
 
 pcb_PTR sst_pcbs[UPROCMAX];
 
-extern pcb_PTR test_pcb; // WE SHOULD NOT DO THIS. I think the cleanest way is
-			 // to make syscalls on nucleus accept 0 as the parent
-			 // sender
 extern pcb_PTR ssi_pcb;
 
 static void write(sst_print_t *write_payload, unsigned int asid,
@@ -140,8 +137,7 @@ void sst()
 			break;
 		case TERMINATE:
 			p_term(child_pcb);
-			// TODO: DO NOT USE test_pcb
-			SYSCALL(SENDMESSAGE, (unsigned int)test_pcb, 0, 0);
+			SYSCALL(SENDMESSAGE, PARENT, 0, 0);
 			p_term(SELF);
 			break;
 		case WRITEPRINTER:

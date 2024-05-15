@@ -96,6 +96,9 @@ static void syscall_handler()
 			// Subsitute ssi_pcb addr
 			if (dest == SSI_FAKE_ADDR)
 				dest = ssi_pcb_real;
+			else if (dest == PARENT) {
+				dest = current_process->p_parent;
+			}
 
 			unsigned int return_val = DEST_NOT_EXIST;
 

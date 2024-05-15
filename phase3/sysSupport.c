@@ -6,8 +6,6 @@
 #include <uriscv/liburiscv.h>
 #include <uriscv/types.h>
 
-#define PARENT 0
-
 static void syscall_handler(support_t *support);
 
 void general_exception_handler()
