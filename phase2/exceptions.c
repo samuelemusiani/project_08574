@@ -43,10 +43,6 @@ void uTLB_RefillHandler()
 	}
 
 	TLBWR();
-	setENTRYHI(0);
-	setENTRYLO(0);
-	setINDEX(0);
-	TLBWI();
 	LDST((state_t *)BIOSDATAPAGE);
 }
 
