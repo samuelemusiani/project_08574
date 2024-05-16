@@ -38,6 +38,11 @@ static int need_dirty(unsigned int asid, unsigned int missing_page)
 	return (text_pages[asid - 1] - 1) < missing_page;
 }
 
+static int is_dirty(unsigned int entry_lo)
+{
+	return entry_lo & DIRTYON;
+}
+
 // Processo mutex
 void mutex_proc()
 {
@@ -116,11 +121,12 @@ void tlb_handler()
 
 	memaddr ram_addr = swap_pool + frame_i * PAGESIZE;
 
-	if (!isFrameFree(&swap_pool_table[frame_i])) { // TODO: Do we need to
-						       // check if it is dirty?
+	if (!isFrameFree(&swap_pool_table[frame_i])) {
 		// Disable interrupts
 		status_IT = getSTATUS();
 		setSTATUS(status_IT & ~(1 << 3));
+
+		unsigned int elo = swap_pool_table[frame_i].sw_pte->pte_entryLO;
 
 		// Mark the page as invalid
 		swap_pool_table[frame_i].sw_pte->pte_entryLO = 0;
@@ -132,8 +138,11 @@ void tlb_handler()
 
 		// Write the contents of frame i to the correct location on
 		// process x’s backing store/flash device
-		read_write_flash(ram_addr, swap_pool_table[frame_i].sw_pageNo,
-				 swap_pool_table[frame_i].sw_asid, 1);
+		if (is_dirty(elo)) {
+			read_write_flash(ram_addr,
+					 swap_pool_table[frame_i].sw_pageNo,
+					 swap_pool_table[frame_i].sw_asid, 1);
+		}
 	}
 
 	// Read the contents of the Current Process’s backing
