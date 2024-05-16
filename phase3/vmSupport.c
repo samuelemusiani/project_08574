@@ -19,7 +19,8 @@ static void update_tlb(pteEntry_t *pte);
 void initSwapStructs()
 {
 	// Init swap pool table
-	swap_pool = (memaddr)FLASHPOOLSTART; // TODO: Find more precise value
+	// swap_pool = (memaddr)FLASHPOOLSTART; // TODO: Find more precise value
+	swap_pool = (memaddr)0x2000C000;
 
 	for (int i = 0; i < POOLSIZE; i++) {
 		swap_pool_table[i].sw_asid = NOPROC;
