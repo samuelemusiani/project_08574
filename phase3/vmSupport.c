@@ -5,7 +5,7 @@
 #include <uriscv/liburiscv.h>
 
 swap_t swap_pool_table[POOLSIZE];
-unsigned int text_pages[UPROCMAX];
+unsigned int text_pages[UPROCMAX] = { -1 };
 
 memaddr swap_pool;
 
@@ -14,33 +14,11 @@ static void read_write_flash(memaddr ram_address, unsigned int disk_block,
 			     unsigned int asid, int is_write);
 static int isFrameFree(swap_t *frame);
 static void update_tlb(pteEntry_t *pte);
-
-void initSwapStructs()
-{
-	// Init swap pool table
-	swap_pool = (memaddr)0x2000C000;
-
-	for (int i = 0; i < POOLSIZE; i++) {
-		swap_pool_table[i].sw_asid = NOPROC;
-	}
-}
-
-// This function reads the number of pages required for
-// the .text area of a u-proc
-static unsigned int number_of_pages_for_text(unsigned int a)
-{
-	return *((unsigned int *)(a + 0x014)) / PAGESIZE;
-}
-
-static int need_dirty(unsigned int asid, unsigned int missing_page)
-{
-	return (text_pages[asid - 1] - 1) < missing_page;
-}
-
-static int is_dirty(unsigned int entry_lo)
-{
-	return entry_lo & DIRTYON;
-}
+static unsigned int number_of_pages_for_text(unsigned int a);
+static int need_dirty(unsigned int asid, unsigned int missing_page);
+static int is_dirty(unsigned int entry_lo);
+static int find_page_by_entryhi(unsigned int entry_hi);
+static int seek_entryhi_index_on_pagetable(unsigned int entry_hi, support_t *s);
 
 // Processo mutex
 void mutex_proc()
@@ -62,35 +40,10 @@ void mutex_proc()
 	}
 }
 
-int find_page_by_entryhi(unsigned int entry_hi)
-{
-	unsigned int tmp = entry_hi >> VPNSHIFT;
-	unsigned int missing_page;
-	if (tmp > 0x80000 + PAGESIZE * MAXPAGES) { // Stack page
-		missing_page = 31 + (0xBFFFF - tmp);
-	} else { // Program page
-		missing_page = (tmp - 0x80000);
-	}
-
-	return missing_page;
-}
-
-int seek_entryhi_index_on_pagetable(unsigned int entry_hi, support_t *s)
-{
-	for (int i = 0; i < MAXPAGES; i++) {
-		if (s->sup_privatePgTbl[i].pte_entryHI == 0 ||
-		    s->sup_privatePgTbl[i].pte_entryHI == entry_hi) {
-			return i;
-		}
-	}
-	return -1; // no page left
-}
-
 void tlb_handler()
 {
 	ssi_payload_t getsupportdata = { .service_code = GETSUPPORTPTR,
 					 .arg = NULL };
-
 	support_t *s;
 
 	// Get the support structure of the current process from the SSI
@@ -104,7 +57,6 @@ void tlb_handler()
 	if ((s->sup_exceptState[PGFAULTEXCEPT].cause & GETEXECCODE) == 24) {
 		trap_handler(&s->sup_exceptState[PGFAULTEXCEPT]);
 	}
-	// Oherwise, it is a TLB-Invalid exception
 
 	// Gain mutual exclusion by sending a message to the mutex process
 	mutex_payload_t p = { .fields.p = 1 };
@@ -116,13 +68,12 @@ void tlb_handler()
 
 	// Choose a frame i in the swap pool
 	unsigned int frame_i = getFrameIndex();
-	unsigned int status;
 
 	memaddr ram_addr = swap_pool + frame_i * PAGESIZE;
 
 	if (!isFrameFree(&swap_pool_table[frame_i])) {
 		// Disable interrupts
-		status = getSTATUS();
+		unsigned int status = getSTATUS();
 		setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 
 		unsigned int elo = swap_pool_table[frame_i].sw_pte->pte_entryLO;
@@ -136,7 +87,7 @@ void tlb_handler()
 		setSTATUS(status);
 
 		// Write the contents of frame i to the correct location on
-		// process x’s backing store/flash device
+		// process x’s backing store/flash device only if is dirty
 		if (is_dirty(elo)) {
 			read_write_flash(ram_addr,
 					 swap_pool_table[frame_i].sw_pageNo,
@@ -146,12 +97,9 @@ void tlb_handler()
 
 	// Read the contents of the Current Process’s backing
 	// store/flash device logical page p into frame i
-	//
-	// We should check as this is no always needed. If
-	// it's the first time we've accessed a stack page, there
-	// is nothing to load.
 	read_write_flash(ram_addr, missing_page, asid, 0);
-	if (missing_page == 0) {
+	if (missing_page == 0 && text_pages[asid - 1] == -1) {
+		// When we load for the first time the porcess
 		text_pages[asid - 1] = number_of_pages_for_text(ram_addr);
 	}
 
@@ -166,7 +114,7 @@ void tlb_handler()
 	swap_pool_table[frame_i].sw_pte = &s->sup_privatePgTbl[page_index];
 
 	// Disable interrupts
-	status = getSTATUS();
+	unsigned int status = getSTATUS();
 	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 
 	// Update the page table of the process
@@ -271,4 +219,60 @@ void mark_free_pages(unsigned int asid)
 
 	setSTATUS(status);
 	return;
+}
+
+void initSwapStructs()
+{
+	// Init swap pool table
+	// Use the find_start_addr.sh script to calculate the address below
+	swap_pool = (memaddr)0x2000C000;
+
+	for (int i = 0; i < POOLSIZE; i++) {
+		swap_pool_table[i].sw_asid = NOPROC;
+	}
+}
+
+// This function reads the number of pages required for
+// the .text area of a u-proc
+static unsigned int number_of_pages_for_text(unsigned int a)
+{
+	return *((unsigned int *)(a + 0x014)) / PAGESIZE;
+}
+
+// We save the number of pages used by the text area in order to check
+// if a page needs to be dirty
+static int need_dirty(unsigned int asid, unsigned int missing_page)
+{
+	return text_pages[asid - 1] <= missing_page;
+}
+
+static int is_dirty(unsigned int entry_lo)
+{
+	return entry_lo & DIRTYON;
+}
+
+static int find_page_by_entryhi(unsigned int entry_hi)
+{
+	unsigned int tmp = entry_hi >> VPNSHIFT;
+	unsigned int missing_page;
+	if (tmp > 0x80000 + PAGESIZE * MAXPAGES) { // Stack page
+		missing_page = 31 + (0xBFFFF - tmp);
+	} else { // Program page
+		missing_page = (tmp - 0x80000);
+	}
+
+	return missing_page;
+}
+
+// This functions is needed as we save pages not in the index of the array
+// to allow more stack pages
+static int seek_entryhi_index_on_pagetable(unsigned int entry_hi, support_t *s)
+{
+	for (int i = 0; i < MAXPAGES; i++) {
+		if (s->sup_privatePgTbl[i].pte_entryHI == 0 ||
+		    s->sup_privatePgTbl[i].pte_entryHI == entry_hi) {
+			return i;
+		}
+	}
+	return -1; // no page left
 }

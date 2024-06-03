@@ -10,8 +10,6 @@ static void syscall_handler(support_t *support);
 
 void general_exception_handler()
 {
-	// get the old state from the support level struct
-
 	ssi_payload_t getsupportdata = { .service_code = GETSUPPORTPTR,
 					 .arg = NULL };
 	SYSCALL(SENDMESSAGE, (unsigned int)ssi_pcb,
