@@ -33,9 +33,6 @@ void test()
 	mutexstate.mie = MIE_ALL;
 	mutex_pcb = p_create(&mutexstate, NULL);
 
-	// TODO: Launch a proc for every I/O device. This is optional and we can
-	// do it later
-
 	// Create 8 sst
 	for (int i = 1; i <= UPROCMAX; i++) {
 		state_t tmpstate;
