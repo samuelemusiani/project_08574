@@ -9,7 +9,7 @@
  * interrupt disabled. In fact, every function begins and ends in the same
  * manner:
  * unsigned int status = getSTATUS();
- * setSTATUS(status & ~(1 << 3));
+ * setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
  * ...
  * setSTATUS(status);
  */
@@ -22,7 +22,7 @@ static int next_pid = 1;
 void freePcb(pcb_t *p)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	list_add(&p->p_list, &pcbFree_h);
 	setSTATUS(status);
 }
@@ -37,7 +37,7 @@ void freePcb(pcb_t *p)
 pcb_t *allocPcb()
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	if (list_empty(&pcbFree_h)) {
 		setSTATUS(status);
 		return NULL;
@@ -81,7 +81,7 @@ pcb_t *allocPcb()
 void initPcbs()
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	for (int i = 0; i < MAXPROC; i++)
 		list_add(&pcbTable[i].p_list, &pcbFree_h);
 	setSTATUS(status);
@@ -94,7 +94,7 @@ void initPcbs()
 void mkEmptyProcQ(struct list_head *head)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	INIT_LIST_HEAD(head);
 	setSTATUS(status);
 }
@@ -106,7 +106,7 @@ void mkEmptyProcQ(struct list_head *head)
 int emptyProcQ(struct list_head *head)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	int a = list_empty(head);
 	setSTATUS(status);
 	return a;
@@ -119,7 +119,7 @@ int emptyProcQ(struct list_head *head)
 void insertProcQ(struct list_head *head, pcb_t *p)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	list_add_tail(&p->p_list, head);
 	setSTATUS(status);
 }
@@ -127,7 +127,7 @@ void insertProcQ(struct list_head *head, pcb_t *p)
 void insertProcQForIO(struct list_head *head, pcb_t *p)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	list_add_tail(&p->p_io, head);
 	setSTATUS(status);
 }
@@ -140,7 +140,7 @@ void insertProcQForIO(struct list_head *head, pcb_t *p)
 pcb_t *headProcQ(struct list_head *head)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	if (list_empty(head)) {
 		setSTATUS(status);
 		return NULL;
@@ -155,7 +155,7 @@ pcb_t *headProcQ(struct list_head *head)
 pcb_t *headProcQForIO(struct list_head *head)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	if (list_empty(head)) {
 		setSTATUS(status);
 		return NULL;
@@ -173,7 +173,7 @@ pcb_t *headProcQForIO(struct list_head *head)
 pcb_t *removeProcQ(struct list_head *head)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	if (list_empty(head)) {
 		setSTATUS(status);
 		return NULL;
@@ -191,7 +191,7 @@ pcb_t *removeProcQ(struct list_head *head)
 pcb_t *removeProcQForIO(struct list_head *head)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	if (list_empty(head)) {
 		setSTATUS(status);
 		return NULL;
@@ -213,7 +213,7 @@ pcb_t *removeProcQForIO(struct list_head *head)
 pcb_t *outProcQ(struct list_head *head, pcb_t *p)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	struct list_head *iter;
 	pcb_t *a = NULL;
 	list_for_each(iter, head)
@@ -233,7 +233,7 @@ pcb_t *outProcQ(struct list_head *head, pcb_t *p)
 pcb_t *outProcQForIO(struct list_head *head, pcb_t *p)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	struct list_head *iter;
 	pcb_t *a = NULL;
 	list_for_each(iter, head)
@@ -255,7 +255,7 @@ pcb_t *outProcQForIO(struct list_head *head, pcb_t *p)
 int emptyChild(pcb_t *p)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	unsigned int a = list_empty(&p->p_child);
 	setSTATUS(status);
 	return a;
@@ -265,7 +265,7 @@ int emptyChild(pcb_t *p)
 void insertChild(pcb_t *prnt, pcb_t *p)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	p->p_parent = prnt;
 
 	list_add_tail(&p->p_sib, &prnt->p_child);
@@ -280,7 +280,7 @@ void insertChild(pcb_t *prnt, pcb_t *p)
 pcb_t *removeChild(pcb_t *p)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	pcb_t *a = removeProcQ(&p->p_child);
 	setSTATUS(status);
 	return a;
@@ -295,7 +295,7 @@ pcb_t *removeChild(pcb_t *p)
 pcb_t *outChild(pcb_t *p)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	if (p->p_parent == NULL) {
 		setSTATUS(status);
 		return NULL;
@@ -311,7 +311,7 @@ pcb_t *outChild(pcb_t *p)
 int searchPcb(struct list_head *head, pcb_t *p)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	struct list_head *iter;
 	unsigned int a = 0;
 	list_for_each(iter, head)
@@ -333,7 +333,7 @@ int searchPcb(struct list_head *head, pcb_t *p)
 int isPcbValid(pcb_t *p)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	int is_valid = 1;
 	if (p < pcbTable || p > pcbTable + MAXPROC - 1 ||
 	    searchPcb(&pcbFree_h, p) ||

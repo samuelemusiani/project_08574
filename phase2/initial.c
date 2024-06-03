@@ -61,7 +61,7 @@ int main(void)
 	process_count++;
 	// In particular, this process needs to have interrupts enabled and
 	// kernel mode
-	ssi_pcb_real->p_s.status = KERNELMODE | INTERRUPTS_ENBALED;
+	ssi_pcb_real->p_s.status = MSTATUS_MPP_M | MSTATUS_MPIE_MASK;
 	ssi_pcb_real->p_s.mie = MIE_ALL;
 	// the SP set to RAMTOP (i.e. use the last RAM frame for its stack)
 	RAMTOP(ssi_pcb_real->p_s.reg_sp);
@@ -76,13 +76,12 @@ int main(void)
 	insertProcQ(&ready_queue, test_pcb);
 	process_count++;
 	// This process needs to have interrupts enabled and kernel-mode on
-	test_pcb->p_s.status = INTERRUPTS_ENBALED | KERNELMODE;
+	test_pcb->p_s.status = MSTATUS_MPP_M | MSTATUS_MPIE_MASK;
 	test_pcb->p_s.mie = MIE_ALL;
 	// the SP set to RAMTOP - (2 * FRAMESIZE)
 	memaddr ramtop;
 	RAMTOP(ramtop);
-	unsigned int framesize = PAGESIZE;
-	test_pcb->p_s.reg_sp = ramtop - (2 * framesize);
+	test_pcb->p_s.reg_sp = ramtop - (2 * PAGESIZE);
 	// PC set to the address of test.
 	test_pcb->p_s.pc_epc = (memaddr)test;
 

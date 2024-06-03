@@ -4,7 +4,6 @@
 #include "headers/sysSupport.h"
 #include <uriscv/liburiscv.h>
 
-// La swap pool table è un array di swap_t entries
 swap_t swap_pool_table[POOLSIZE];
 unsigned int text_pages[UPROCMAX];
 
@@ -19,7 +18,6 @@ static void update_tlb(pteEntry_t *pte);
 void initSwapStructs()
 {
 	// Init swap pool table
-	// swap_pool = (memaddr)FLASHPOOLSTART; // TODO: Find more precise value
 	swap_pool = (memaddr)0x2000C000;
 
 	for (int i = 0; i < POOLSIZE; i++) {
@@ -118,14 +116,14 @@ void tlb_handler()
 
 	// Choose a frame i in the swap pool
 	unsigned int frame_i = getFrameIndex();
-	unsigned int status_IT;
+	unsigned int status;
 
 	memaddr ram_addr = swap_pool + frame_i * PAGESIZE;
 
 	if (!isFrameFree(&swap_pool_table[frame_i])) {
 		// Disable interrupts
-		status_IT = getSTATUS();
-		setSTATUS(status_IT & ~(1 << 3));
+		status = getSTATUS();
+		setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 
 		unsigned int elo = swap_pool_table[frame_i].sw_pte->pte_entryLO;
 
@@ -135,7 +133,7 @@ void tlb_handler()
 		update_tlb(swap_pool_table[frame_i].sw_pte);
 
 		// Enable interrupts
-		setSTATUS(status_IT);
+		setSTATUS(status);
 
 		// Write the contents of frame i to the correct location on
 		// process x’s backing store/flash device
@@ -168,8 +166,8 @@ void tlb_handler()
 	swap_pool_table[frame_i].sw_pte = &s->sup_privatePgTbl[page_index];
 
 	// Disable interrupts
-	status_IT = getSTATUS();
-	setSTATUS(status_IT & ~(1 << 3));
+	status = getSTATUS();
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 
 	// Update the page table of the process
 	s->sup_privatePgTbl[page_index].pte_entryHI =
@@ -181,7 +179,7 @@ void tlb_handler()
 	update_tlb(&s->sup_privatePgTbl[page_index]);
 
 	// Enable interrupts
-	setSTATUS(status_IT);
+	setSTATUS(status);
 
 	p.fields.p = 0;
 	p.fields.v = 1;
@@ -193,20 +191,21 @@ void tlb_handler()
 
 static int isFrameFree(swap_t *frame)
 {
-	return frame->sw_asid == -1;
+	return frame->sw_asid == NOPROC;
 }
 
 static void update_tlb(pteEntry_t *pte)
 {
 	setENTRYHI(pte->pte_entryHI);
 	TLBP();
+	// The present flag is wrong, it checks if it is not prenset. So we use
+	// a not
 	if (!(getINDEX() & PRESENTFLAG)) {
 		setENTRYLO(pte->pte_entryLO);
 		TLBWI();
 	}
 }
 
-// PandOS replacement algorithm round-robin
 static size_tt getFrameIndex()
 {
 	// Cerco un frame libero
@@ -225,14 +224,11 @@ static size_tt getFrameIndex()
 static void read_write_flash(memaddr ram_address, unsigned int disk_block,
 			     unsigned int asid, int is_write)
 {
-	// Load in ram the source code of the child process
-	// (flash device number [ASID])
 	devreg_t *base = (devreg_t *)DEV_REG_ADDR(IL_FLASH, asid - 1);
 	unsigned int *data0 = &(base->dtp.data0);
 	unsigned int *command_addr = &(base->dtp.command);
 	unsigned int status;
 
-	// these lines will load the entire flash memory in RAM
 	ssi_do_io_t data0_doio = {
 		.commandAddr = data0,
 		.commandValue = ram_address,
@@ -265,14 +261,14 @@ static void read_write_flash(memaddr ram_address, unsigned int disk_block,
 
 void mark_free_pages(unsigned int asid)
 {
-	unsigned int status_IT = getSTATUS();
-	setSTATUS(status_IT & ~(1 << 3));
+	unsigned int status = getSTATUS();
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 
 	for (int i = 0; i < POOLSIZE; i++) {
 		if (swap_pool_table[i].sw_asid == asid)
 			swap_pool_table[i].sw_asid = NOPROC;
 	}
 
-	setSTATUS(status_IT);
+	setSTATUS(status);
 	return;
 }

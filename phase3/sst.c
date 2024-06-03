@@ -114,12 +114,10 @@ void sst()
 	state_t child_state;
 	STST(&child_state);
 
-	child_state.pc_epc = 0x800000B0;
-	child_state.reg_sp = 0xC0000000;
+	child_state.pc_epc = UPROCSTARTADDR;
+	child_state.reg_sp = USERSTACKTOP;
 
-	// not sure about this, I took the values from p2test's processes
-	child_state.status |= MSTATUS_MIE_MASK & ~MSTATUS_MPP_M;
-
+	child_state.status = MSTATUS_MPIE_MASK;
 	child_state.mie = MIE_ALL;
 	pcb_PTR child_pcb = p_create(&child_state, support);
 
@@ -222,14 +220,11 @@ void sst()
 			p_term(SELF);
 			break;
 		case WRITEPRINTER:
-			sst_print_t *print_payload =
-				(sst_print_t *)payload->arg;
-			write(print_payload, asid, IL_PRINTER);
+			write((sst_print_t *)payload->arg, asid, IL_PRINTER);
 			SYSCALL(SENDMESSAGE, (unsigned int)child_pcb, 0, 0);
 			break;
 		case WRITETERMINAL:
-			sst_print_t *term_payload = (sst_print_t *)payload->arg;
-			write(term_payload, asid, IL_TERMINAL);
+			write((sst_print_t *)payload->arg, asid, IL_TERMINAL);
 			SYSCALL(SENDMESSAGE, (unsigned int)child_pcb, 0, 0);
 			break;
 		}

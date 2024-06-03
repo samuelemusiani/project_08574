@@ -7,7 +7,7 @@ LIST_HEAD(supportFree_h);
 void freeSupport(support_t *s)
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	list_add(&s->s_list, &supportFree_h);
 	setSTATUS(status);
 }
@@ -15,7 +15,7 @@ void freeSupport(support_t *s)
 support_t *allocSupport()
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	if (list_empty(&supportFree_h)) {
 		setSTATUS(status);
 		return NULL;
@@ -34,7 +34,7 @@ support_t *allocSupport()
 void initSupports()
 {
 	unsigned int status = getSTATUS();
-	setSTATUS(status & ~(1 << 3));
+	setSTATUS(status & ~(1 << MSTATUS_MIE_BIT));
 	for (int i = 0; i < UPROCMAX; i++)
 		list_add(&support_table[i].s_list, &supportFree_h);
 	setSTATUS(status);

@@ -29,8 +29,7 @@ void test()
 	stack_ptr -= QPAGE;
 	mutexstate.reg_sp = stack_ptr;
 	mutexstate.pc_epc = (memaddr)mutex_proc;
-	mutexstate.status = MSTATUS_MPP_M | MSTATUS_MPIE_MASK |
-			    MSTATUS_MIE_MASK;
+	mutexstate.status = MSTATUS_MPP_M | MSTATUS_MPIE_MASK;
 	mutexstate.mie = MIE_ALL;
 	mutex_pcb = p_create(&mutexstate, NULL);
 
@@ -38,15 +37,14 @@ void test()
 	// do it later
 
 	// Create 8 sst
-	for (int i = 1; i <= 8; i++) {
+	for (int i = 1; i <= UPROCMAX; i++) {
 		state_t tmpstate;
 		STST(&tmpstate);
 		tmpstate.entry_hi = i << ASIDSHIFT;
 		stack_ptr -= QPAGE;
 		tmpstate.reg_sp = stack_ptr;
 		tmpstate.pc_epc = (memaddr)sst;
-		tmpstate.status |= MSTATUS_MPP_M | MSTATUS_MPIE_MASK |
-				   MSTATUS_MIE_MASK;
+		tmpstate.status |= MSTATUS_MPP_M | MSTATUS_MPIE_MASK;
 		tmpstate.mie = MIE_ALL;
 
 		support_t *s = allocSupport();
@@ -71,7 +69,7 @@ void test()
 		sst_pcbs[i - 1] = p_create(&tmpstate, s);
 	}
 
-	for (int i = 0; i < 8; i++) {
+	for (int i = 0; i < UPROCMAX; i++) {
 		pcb_t *s = (pcb_t *)SYSCALL(RECEIVEMESSAGE, ANYMESSAGE, 0, 0);
 		mark_free_pages(s->p_supportStruct->sup_asid);
 	}

@@ -48,8 +48,7 @@ static void syscall_handler(support_t *support)
 		pcb_t *dest = (pcb_t *)s->reg_a1;
 		unsigned int payload = s->reg_a2;
 
-		// PARENT == 0
-		if (!dest) {
+		if (dest == PARENT) {
 			unsigned int asid = support->sup_asid;
 			dest = sst_pcbs[asid - 1];
 		}
@@ -62,8 +61,7 @@ static void syscall_handler(support_t *support)
 	case RECEIVEMSG: {
 		pcb_t *sender = (pcb_t *)s->reg_a1;
 
-		// PARENT == 0
-		if (!sender) {
+		if (sender == PARENT) {
 			unsigned int asid = support->sup_asid;
 			sender = sst_pcbs[asid - 1];
 		}

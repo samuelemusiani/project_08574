@@ -226,17 +226,6 @@ device
 /* Inizio indirizzo di device registers */
 #define START_DEVREG 0x10000054
 
-/* uRISCV macros for userful operations */
-// MPP bits of the status register. p.18 Tesi Gian + uRISCV guide
-// https://github.com/riscv/riscv-isa-manual/releases/download/Priv-v1.12/riscv-privileged-20211203.pdf
-// p.130
-#define KERNELMODE (0b11 << MSTATUS_MPP_BIT)
-
-// MIE bit of the status register. P.18 Tesi Gian + uRISCV guide
-// https://github.com/riscv/riscv-isa-manual/releases/download/Priv-v1.12/riscv-privileged-20211203.pdf
-// p.130
-#define INTERRUPTS_ENBALED (1 << MSTATUS_MPIE_BIT) // Not shure
-
 #define PARENT 0
 
 #endif
