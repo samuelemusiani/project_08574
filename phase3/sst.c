@@ -129,6 +129,87 @@ void sst()
 		ssi_payload_t *payload;
 		SYSCALL(RECEIVEMESSAGE, (unsigned int)child_pcb,
 			(unsigned int)&payload, 0);
+
+		// Scrivo in italiano perché faccio prima: Le linee seguenti
+		// sono commentate perché non realmente necessarie con i test
+		// che hanno fornito i tutor. Tuttavia questi test non provano
+		// lo swap, che mi sono messo a provare aggiungendo array molto
+		// grandy allo stack dei processi di test in modo da forzare
+		// l'utilizzo di più pagine. Facendo questo ho scoperto che i
+		// test non passavano completamente e venivano printate delle
+		// scritte sbagliate su terminale. Ci ho perso 3 o 4 settimane
+		// (non voglio pensarci) ma penso di aver trovato il problema.
+		//
+		// Forzano molto l'uso dello swap, i processi erano
+		// continuamente in competizione tra loro e si continuavano a
+		// caricare e scaricare pagine a vincenda. Il sitema è quindi in
+		// tashing ma non abbiamo nessun controllo per mettere in pausa
+		// dei processi e farli continuare più avanti. Nonostante questo
+		// il vero problema è il seguente: se un processo di test
+		// (uproc) vuole fare una write su termianale, deve chiedere al
+		// suo sst corrispettivo, che è suo padre e condivide la stessa
+		// struttura di supporto (IMPORTANTE). Data la natura del
+		// microkernel, le SYSCALL sono sempre e solo 2: SEND e RECEIVE.
+		// Questo purtroppo crea un problema, in quanto non si è mai
+		// relamente certi che il processo abbia fatto la RECEIVE prima
+		// di processare la SEND. Quindi può capitare che si inizi a
+		// processare la SEND prima che la RECEIVE sia stata fatta,
+		// ovvero prima che il processo sia bloccato.
+		//
+		// In questo caso un processo di test (uproc) fa una SEND verso
+		// il suo sst per scrivere su terminale. La SEND passa per il
+		// gestore delle syscall a livello kernel, e poi viene fatto il
+		// pass_up per gestire la syscall a livello di supporto. Il
+		// livello di supporto fa un'ulteriore syscall verso il padre
+		// del processo (l'sst) e lo risveglia chiedendo una print su
+		// terminale. Come stringa da printare viene passato un
+		// puntatore che si trova in un indirizzo virtuale del processo
+		// di test. La syscall da parte del livello di supporto di
+		// conclude, ma essnedo gli interrupt abilitati arriva arriva
+		// l'interrupt del CPU-Timer e l'uproc viene messo in coda alla
+		// rady_queue (prima o dopo la LDST, però prima della RECEIVE).
+		//
+		// Degli altri processi eseguono e tolgono la pagina su cui è
+		// prensete l'indirizzo della stringa da stampare per l'sst e di
+		// conseguenza anche la pagina di stack il processo di test.
+		//
+		// L'sst parte ad eseguire e deve printare una carattere alla
+		// volta. Inizia a leggere la stringa ma l'indirizzo logico non
+		// è nel tlb e neanche in memoria. Viene fatta la tlb-refill e
+		// successivamente viene chiamato il tlb_handler (pager) per
+		// caricare la pagina in memoria. Per chiamare il tlb_handler,
+		// tutto lo stato dell'sst viene scritto nella struttura di
+		// supporto. Il tlb_handler inizia ad eseguire e arriva a
+		// chiedere la mutex per la swap_pool_table. Viene messo in
+		// pausa e si passa al prossimo processo.
+		//
+		// Prima o poi arriverà il processo di test che era stato messo
+		// nella ready queue per colpa dell'interrupt di CPU-Timer. Il
+		// problema è che per eseguire ha necessità delle sue pagine in
+		// memoria, quindi chiamerà anche lui il tlb_handler e *andrà a
+		// sovrascrivere lo stato dell'sst* che stava aspettando la
+		// mutex. Il processo di test si blocca sulla richiesta per la
+		// mutex.
+		//
+		// Si risveglia l'sst, che però ha i registri sovrascritti e da
+		// qui si rompe tutto. Ho notato che delle volte cambia il
+		// current_process e dall'sst passa magicamente al figlio. Visto
+		// che antrambi i processi sono bloccati sulla mutex, quando uno
+		// caricherà effettivamente la pagina in memoria l'altro non se
+		// ne sarà accorto e farà lo stesso, crando un duplicato della
+		// pagina e rompendo quindi tutta la consistenza dei dati.
+		//
+		// La soluzione sottostante è orribile: aspettare abbastanza in
+		// modo di essere quasi sicuri che il processo figlio abbia
+		// fatto la RECEIVE e sia effettivamente bloccato. La solzione
+		// più pulita sarebbe fare un SYSCALL che manda un messaggio e
+		// blocca il processo in modo atomico. Però non posso mettermi a
+		// fare quello che voglio per questo progetto, perché altrimenti
+		// lo avrei fatto tutto monolitico :)
+
+		// for (int i = 0; i < 10000; i++)
+		//	;
+
 		switch (payload->service_code) {
 		case GET_TOD:
 			unsigned int tod;
