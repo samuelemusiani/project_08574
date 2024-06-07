@@ -70,7 +70,7 @@ static void syscall_handler(support_t *support)
 		break;
 	}
 	default:
-		PANIC();
+		trap_handler();
 		break;
 	}
 	s->pc_epc += 4;

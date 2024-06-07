@@ -1,4 +1,5 @@
 #include "headers/sst.h"
+#include "headers/sysSupport.h"
 #include "headers/utils3.h"
 #include <uriscv/liburiscv.h>
 
@@ -50,7 +51,7 @@ static void write(sst_print_t *write_payload, unsigned int asid,
 			SYSCALL(RECEIVEMESSAGE, (unsigned int)ssi_pcb,
 				(unsigned int)(&status), 0);
 			if ((status & WRITESTATUSMASK) != 1)
-				PANIC();
+				trap_handler();
 
 			count++;
 		}
@@ -82,7 +83,7 @@ static void write(sst_print_t *write_payload, unsigned int asid,
 				(unsigned int)(&status), 0);
 
 			if ((status & WRITESTATUSMASK) != RECVD)
-				PANIC();
+				trap_handler();
 
 			count++;
 		}
