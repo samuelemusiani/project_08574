@@ -133,18 +133,18 @@ void sst()
 		// sono commentate perché non realmente necessarie con i test
 		// che hanno fornito i tutor. Tuttavia questi test non provano
 		// lo swap, che mi sono messo a provare aggiungendo array molto
-		// grandy allo stack dei processi di test in modo da forzare
+		// grandi allo stack dei processi di test in modo da forzare
 		// l'utilizzo di più pagine. Facendo questo ho scoperto che i
 		// test non passavano completamente e venivano printate delle
 		// scritte sbagliate su terminale. Ci ho perso 3 o 4 settimane
 		// (non voglio pensarci) ma penso di aver trovato il problema.
 		//
-		// Forzano molto l'uso dello swap, i processi erano
+		// Forzando molto l'uso dello swap, i processi erano
 		// continuamente in competizione tra loro e si continuavano a
-		// caricare e scaricare pagine a vincenda. Il sitema è quindi in
-		// tashing ma non abbiamo nessun controllo per mettere in pausa
-		// dei processi e farli continuare più avanti. Nonostante questo
-		// il vero problema è il seguente: se un processo di test
+		// caricare e scaricare pagine a vincenda. Il sistema è quindi
+		// in trashing ma non abbiamo nessun controllo per mettere in
+		// pausa dei processi e farli continuare più avanti. Nonostante
+		// questo il vero problema è il seguente: se un processo di test
 		// (uproc) vuole fare una write su termianale, deve chiedere al
 		// suo sst corrispettivo, che è suo padre e condivide la stessa
 		// struttura di supporto (IMPORTANTE). Data la natura del
@@ -163,14 +163,14 @@ void sst()
 		// del processo (l'sst) e lo risveglia chiedendo una print su
 		// terminale. Come stringa da printare viene passato un
 		// puntatore che si trova in un indirizzo virtuale del processo
-		// di test. La syscall da parte del livello di supporto di
-		// conclude, ma essnedo gli interrupt abilitati arriva arriva
+		// di test. La syscall da parte del livello di supporto si
+		// conclude, ma essendo gli interrupt abilitati arriva arriva
 		// l'interrupt del CPU-Timer e l'uproc viene messo in coda alla
 		// rady_queue (prima o dopo la LDST, però prima della RECEIVE).
 		//
 		// Degli altri processi eseguono e tolgono la pagina su cui è
-		// prensete l'indirizzo della stringa da stampare per l'sst e di
-		// conseguenza anche la pagina di stack il processo di test.
+		// presente l'indirizzo della stringa da stampare per l'sst e di
+		// conseguenza anche la pagina di stack del processo di test.
 		//
 		// L'sst parte ad eseguire e deve printare una carattere alla
 		// volta. Inizia a leggere la stringa ma l'indirizzo logico non

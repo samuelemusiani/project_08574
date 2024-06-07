@@ -103,7 +103,7 @@ past operating state [3] of the processor. Although it's a 32-bit register, only
     process (through a `LDST()`), the MPIE value is copied into MIE and becomes
     the actual bit for enabling/disabling interrupts in the current running 
     process.
-    - MPP[1:0]: MPP is two bits wide and correspond to the bits 11 and 12 [4].
+    - MPP[1:0]: MPP is two bits wide and correspond to bits 11 and 12 [4].
     These bits hold the mode in witch the process was running before the 
     exception was raised (as for MPIE). The two modes possibles are Machine-mode
     (11) and User-mode (00) (I'm not 100% sure the values are correct). When 

@@ -86,7 +86,7 @@ void tlb_handler()
 		// Enable interrupts
 		setSTATUS(status);
 
-		// Write the contents of frame i to the correct location on
+		// Write the contents of the frame i to the correct location on
 		// process x’s backing store/flash device only if is dirty
 		if (is_dirty(elo)) {
 			read_write_flash(ram_addr,
@@ -99,7 +99,7 @@ void tlb_handler()
 	// store/flash device logical page p into frame i
 	read_write_flash(ram_addr, missing_page, asid, 0);
 	if (missing_page == 0 && text_pages[asid - 1] == -1) {
-		// When we load for the first time the porcess
+		// We load for the first time the porcess
 		text_pages[asid - 1] = number_of_pages_for_text(ram_addr);
 	}
 
@@ -146,7 +146,7 @@ static void update_tlb(pteEntry_t *pte)
 {
 	setENTRYHI(pte->pte_entryHI);
 	TLBP();
-	// The present flag is wrong, it checks if it is not prenset. So we use
+	// The PRESENTFLAG is wrong, it checks if it is not present. So we use
 	// a not
 	if (!(getINDEX() & PRESENTFLAG)) {
 		setENTRYLO(pte->pte_entryLO);
@@ -233,7 +233,7 @@ void initSwapStructs()
 }
 
 // This function reads the number of pages required for
-// the .text area of a u-proc
+// the .text area of an u-proc
 static unsigned int number_of_pages_for_text(unsigned int a)
 {
 	return *((unsigned int *)(a + 0x014)) / PAGESIZE;
@@ -264,7 +264,7 @@ static int find_page_by_entryhi(unsigned int entry_hi)
 	return missing_page;
 }
 
-// This functions is needed as we save pages not in the index of the array
+// This function is needed as we save pages not in the index of the array
 // to allow more stack pages
 static int seek_entryhi_index_on_pagetable(unsigned int entry_hi, support_t *s)
 {
