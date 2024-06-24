@@ -83,7 +83,7 @@ static void device_interrupt_handler(unsigned int iln)
 
 	int device_is_terminal; // The interrupt is from a terminal
 	int terminal_transm;	// The interrupt is from a transm sub-terminal
-	if (IL_TERMINAL <= iln && iln < IL_TERMINAL + DEVPERINT) {
+	if (IL_TERMINAL == iln) {
 		device_is_terminal = 1;
 		/*
 		 * For the duration of the operation, the sub-device’s status is
